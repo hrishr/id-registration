@@ -141,11 +141,16 @@ let tm;app.addEventListener('input',ev=>{const n=ev.target.name;if(!n||S.view!='
   if(MASK[n])ev.target.value=fmt(ev.target.value,MASK[n]);
   if(['first','mi','last','ext'].includes(n))$('#nm').textContent=idLabel(vals())+' · user';if(n=='ptype')$('#pl').textContent=posL(ev.target.value);$('#sv').textContent='Saving…';prev();clearTimeout(tm);
   tm=setTimeout(async()=>{try{await patch(vals());$('#sv').textContent='All changes saved'}catch(x){$('#sv').textContent='Not saved: '+x.message}},1000)});
-function padData(){ // trims the signature to its ink, removes the white background and darkens thin strokes
-  const c=$('#pad'),g=c.getContext('2d'),im=g.getImageData(0,0,c.width,c.height),d=im.data;let x0=c.width,y0=c.height,x1=0,y1=0;
+function inkTrim(c){ // removes the white background, darkens thin strokes and crops to the ink
+  const g=c.getContext('2d'),im=g.getImageData(0,0,c.width,c.height),d=im.data;let x0=c.width,y0=c.height,x1=0,y1=0;
   for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++){const i=(y*c.width+x)*4,m=Math.min(d[i],d[i+1],d[i+2]),a=Math.round(d[i+3]*Math.min(1,(255-m)*2.2/255));d[i+3]=a;if(a>25){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}}
   if(x1<x0)return c.toDataURL('image/png');
   const u=document.createElement('canvas'),t=document.createElement('canvas'),p=8,w=x1-x0+1+2*p,h=y1-y0+1+2*p;u.width=c.width;u.height=c.height;u.getContext('2d').putImageData(im,0,0);t.width=w;t.height=h;t.getContext('2d').drawImage(u,x0-p,y0-p,w,h,0,0,w,h);return t.toDataURL('image/png')}
+const padData=()=>inkTrim($('#pad'));
+const trimImg=src=>new Promise(res=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;c.getContext('2d').drawImage(im,0,0);res(inkTrim(c))};im.onerror=()=>res(src);im.src=src});
+async function dget(id){const token=await auth.currentUser.getIdToken(),r=await fetch(CFG.driveScript,{method:'POST',body:JSON.stringify({token,action:'get',id})}),j=await r.json();if(j.error)throw Error(j.error);return j.data}
+const sigP={};S.sc={};
+const sigLoad=id=>!id?Promise.resolve():(sigP[id]||=(async()=>{try{S.sc[id]=await trimImg(await dget(id))}catch(x){S.sc[id]=null}prev()})());
 function submit(){
   const d=vals(),e=S.emp||{},hasP=!!e.photoId,hasS=!!e.signId||!!S.sig,miss=F.filter(f=>(!f[4]&&!d[f[0]])||bad(f[0],d[f[0]])).length+(hasP?0:1)+(hasS?0:1);
   const row=([k,l,,,fl])=>`<div class=rv><span>${l}</span><b class="${(!fl&&!d[k])||bad(k,d[k])?'miss':''}">${esc(d[k])||(fl?'—':'Missing')}${bad(k,d[k])?' (incomplete)':''}</b></div>`;
@@ -171,10 +176,10 @@ function qrSvg(e){try{if(!(e.tin||e.sss||e.gsis||e.phic||e.pagibig))return'';con
 function idCards(e,pr){
   // Layout measured from F-ID2025.jpg / B-ID2025QR.jpg (1624x2576 px): left/top/width are % of the card, font sizes are cqw (% of card width).
   // Text boxes use line-height:1 and are placed by baseline. Long single-line values auto-shrink (.fit). Font: Outfit (closest free match).
-  const W=pr?1200:800,n=[e.first,e.mi,e.last,e.ext&&e.ext!='None'?e.ext:''].filter(Boolean).join(' ').toUpperCase(),q=qrSvg(e);
+  if(e.signId&&!(e.signId in S.sc))sigLoad(e.signId);const W=pr?1200:800,n=[e.first,e.mi,e.last,e.ext&&e.ext!='None'?e.ext:''].filter(Boolean).join(' ').toUpperCase(),q=qrSvg(e);
   const T=(t,l,top,w,fs,x='',fit)=>`<span class="t${fit?' fit':''}" data-fs="${fs}" style="left:${l}%;top:${top}%;width:${w}%;font-size:${fs}cqw;${x}">${esc(t)}</span>`;
   const G='color:#072410;text-align:center;',U='font-weight:700;color:#111;text-decoration:underline;text-decoration-thickness:.25cqw;text-underline-offset:.55cqw;';
-  return`<div class="cards${pr?' pr':''}"><div class=idc style="background-image:url(${img(S.tpl.front,W)})"><i class=ph style="background-image:url(${e._photo||img(e.photoId,W)})"></i>${T((e.first||'').toUpperCase(),18.9,57.06,73.9,8,G+'font-weight:500',1)}${T([e.mi,e.last,e.ext&&e.ext!='None'?e.ext:''].filter(Boolean).join(' ').toUpperCase(),18.9,61.64,73.9,8,G+'font-weight:500',1)}${T(e.position,12.6,66.57,87,7,G+'font-weight:300',1)}${e._sig||e.signId?`<img class=sg src="${e._sig||img(e.signId,W)}">`:''}${T(e.empNo,17.2,88.73,73.9,7.39,G+'font-weight:400',1)}</div>
+  return`<div class="cards${pr?' pr':''}"><div class=idc style="background-image:url(${img(S.tpl.front,W)})"><i class=ph style="background-image:url(${e._photo||img(e.photoId,W)})"></i>${T((e.first||'').toUpperCase(),18.9,57.06,73.9,8,G+'font-weight:500',1)}${T([e.mi,e.last,e.ext&&e.ext!='None'?e.ext:''].filter(Boolean).join(' ').toUpperCase(),18.9,61.64,73.9,8,G+'font-weight:500',1)}${T(e.position,12.1,66.24,88,8.2,G+'font-weight:300',1)}${e._sig||e.signId?`<img class=sg src="${e._sig||S.sc[e.signId]||img(e.signId,W)}">`:''}${T(e.empNo,17.2,88.73,73.9,7.39,G+'font-weight:400',1)}</div>
   <div class=idc style="background-image:url(${img(S.tpl.back,W)})">${T(e.address,15.4,5.88,84.4,3.88,U+'line-height:1.34;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden')}${q?`<div class=qr>${q}</div>`:''}${T(fd(e.birth),48.6,38.42,40,5.05,U,1)}${T(bt(e.blood),48.6,43.16,50.5,5.05,U,1)}${T(e.contact,48.6,48.32,40,5.05,U,1)}${T(e.email,18.6,55.97,71,5.05,U,1)}${T(e.eName,21.6,67.54,61.6,5.05,U+'text-align:center;',1)}${T(e.eRel,21.6,70.99,61.6,5.05,U+'text-align:center;',1)}${T(e.eContact,48.6,75.34,45,5.05,U,1)}</div></div>`}
 
 // ---- Admin ----
@@ -198,8 +203,9 @@ function ver(){
   ${rows.length?`<div class="card tw"><table><tr><th>EMPLOYEE NO.<th>NAME<th>CAMPUS<th>${re?'REASON':'EMPLOYMENT'}<th>SUBMITTED<th>STATUS<th style="text-align:right">ACTION</tr>${rows.map(r=>`<tr><td><b>${esc(r.empNo)}</b><td>${esc(r.last)}, ${esc(r.first)}<td>${esc(r.campus)}<td>${esc(re?r.reissueReason:r.employment)}<td>${sdate(r)}<td>${badge(r.status)}<td style="text-align:right"><button class=lk data-a=review data-u=${r.uid}>Review</button></tr>`).join('')}</table></div>`
   :`<div class=card style="text-align:center;color:var(--mut);padding:36px 20px">${re?'No reissue requests.':`No records with status “${ST[S.tab][0]}”.`}</div>`}
   <div class=hd style="margin:14px 0 0;color:#fff"><span>${all.length?`Showing ${from}–${to} of ${all.length}`:'No records'}</span><span>Page ${S.pg+1} of ${pages} <button class="pill" data-a=pg data-d=-1 ${S.pg?'':'disabled'}>Previous</button> <button class="pill" data-a=pg data-d=1 ${S.pg<pages-1?'':'disabled'}>Next</button></span></div>`)}
-function review(uid){
+async function review(uid){
   const r=S.rows.find(x=>x.uid==uid),b=(s,l,c='')=>`<button class="btn sm ${c}" data-a=set data-u=${uid} data-s=${s}>${l}</button>`;
+  await sigLoad(r.signId);
   const acts={pending:b('verified','Verify')+b('draft','Return to employee','alt'),verified:b('issued','Mark as issued')+b('inactive','Set inactive','alt'),issued:(r.reissue?b('verified','Approve reissue'):'')+b('inactive','Set inactive','alt')+b('revoked','Revoke','red'),inactive:b('verified','Reactivate'),revoked:b('verified','Reinstate','alt')}[r.status]||'';
   const m=document.createElement('div');m.className='md';m.innerHTML=`<div class=card><div class=hd><b>${esc(r.first)} ${esc(r.last)} · ${esc(r.empNo)}</b>${badge(r.status)}</div>${r.reissue?`<div class=note>Reissue request: <b>${esc(r.reissueReason)}</b>${r.reissueDocId?` · <a href="https://drive.google.com/file/d/${r.reissueDocId}/view" target=_blank rel=noopener>View document</a>`:''}</div>`:''}
   <div class=grid>${F.map(([k,l])=>`<div><label>${l}</label>${esc(r[k])||'—'}</div>`).join('')}</div>${idCards(r)}
@@ -219,7 +225,7 @@ function prt(){
   <div class=pills><button class="pill ${S.ptab=='verified'?'on':''}" data-a=ptab data-t=verified>Ready to print${rd.length?`<i>${rd.length}</i>`:''}</button><button class="pill ${S.ptab=='issued'?'on':''}" data-a=ptab data-t=issued>Printed${pd.length?`<i>${pd.length}</i>`:''}</button></div>
   ${rows.length?`<div class="card tw"><table><tr><th><input type=checkbox data-a=pall style="width:auto"><th>EMPLOYEE NO.<th>NAME<th>CAMPUS<th>EMPLOYMENT<th style="text-align:right">ACTION</tr>${rows.map(r=>`<tr><td><input type=checkbox class=pk value=${r.uid} ${S.sel?.includes(r.uid)?'checked':''} style="width:auto"><td><b>${esc(r.empNo)}</b><td>${esc(r.last)}, ${esc(r.first)}<td>${esc(r.campus)}<td>${esc(r.employment)}<td style="text-align:right"><button class="btn sm" data-a=print1 data-u=${r.uid}>${S.ptab=='verified'?'Print':'Reprint'}</button></tr>`).join('')}</table></div><div class=row style="justify-content:flex-start;margin-top:14px"><button class="btn alt" data-a=print>Print selected</button></div>`:`<div class=card style="text-align:center;color:var(--mut);padding:36px 20px">${S.ptab=='verified'?'No verified IDs waiting to be printed.':'No printed IDs yet.'}</div>`}`);S.sel=null}
 async function doPrint(ids){
-  if(!ids.length)return toast('Select at least one employee');const h=$('#pr');h.innerHTML=ids.map(u=>idCards(S.rows.find(r=>r.uid==u),1)).join('');toast('Loading images…');
+  if(!ids.length)return toast('Select at least one employee');await Promise.all(ids.map(u=>sigLoad(S.rows.find(r=>r.uid==u).signId)));const h=$('#pr');h.innerHTML=ids.map(u=>idCards(S.rows.find(r=>r.uid==u),1)).join('');toast('Loading images…');
   const urls=[...new Set((h.innerHTML.match(/https:\/\/drive\.google\.com\/thumbnail\?[^"')]+/g)||[]).map(u=>u.replace(/&amp;/g,'&')))];
   await Promise.all(urls.map(u=>new Promise(r=>{const i=new Image();i.onload=i.onerror=r;i.src=u;setTimeout(r,20000)})));
   window.onafterprint=async()=>{window.onafterprint=null;h.innerHTML='';const v=ids.filter(u=>S.rows.find(r=>r.uid==u).status=='verified');
