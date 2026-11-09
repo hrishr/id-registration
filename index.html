@@ -16,7 +16,7 @@ header{background:linear-gradient(90deg,#1f4b30,#2d6446);border-bottom:5px solid
 @media(max-width:640px){.ttl{font-size:19px}.tsub{font-size:9px}.tb{gap:10px}}
 .idc .qr{left:36.4%;top:12.9%;width:40.3%;aspect-ratio:1;background:#fff;padding:1.4%;box-sizing:border-box}.idc .qr svg{position:static;width:100%;height:100%;display:block}
 #pr{display:none}.pr .idc{width:54mm;height:85.6mm;aspect-ratio:auto;border:0;border-radius:0}
-@media print{body>*:not(#pr){display:none!important}body{display:block;background:#fff}#pr{display:block}#pr .cards{display:block;margin:0}#pr .idc{margin:0;break-after:page;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}#pr .cards:last-child .idc:last-child{break-after:auto;page-break-after:auto}@page{size:54mm 85.6mm;margin:0}}.bar{display:flex;align-items:center;gap:14px;height:56px}
+@media print{body>*:not(#pr){display:none!important}body{display:block;background:#fff}#pr{display:block}#pr .cards{display:block;margin:0}#pr *{-webkit-print-color-adjust:exact;print-color-adjust:exact}#pr .idc{margin:0;break-after:page;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}#pr .cards:last-child .idc:last-child{break-after:auto;page-break-after:auto}@page{size:54mm 85.6mm;margin:0}}.bar{display:flex;align-items:center;gap:14px;height:56px}
 .bar b{flex:1;display:flex;gap:10px;align-items:center;font-size:16px}.bar nav{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 nav a{cursor:pointer;color:var(--mut);font-size:14px;padding:6px 9px;border-radius:6px}nav a.on{color:var(--ink);font-weight:600}
 .cnt{background:#e5322d;color:#fff;border-radius:9px;font-size:11px;padding:1px 6px;margin-left:4px}
@@ -35,7 +35,7 @@ input,select,textarea{width:100%;font:inherit;padding:9px 11px;border:1px solid 
 .pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.pill{background:#fff;color:var(--ink);border:1px solid var(--gold);border-radius:20px;padding:4px 14px;font-size:14px;cursor:pointer}
 .pill:disabled{opacity:.45;cursor:default;background:transparent;color:#cfe6d6}.pill.on{background:#f0d98c}.pill i{font-style:normal;background:#0001;border-radius:8px;padding:0 6px;margin-left:5px;font-size:12px}
 table{width:100%;border-collapse:collapse}th{font-size:12px;color:var(--mut);text-align:left;font-weight:500;padding:12px 10px}td{padding:14px 10px;border-top:1px solid var(--line)}.tw{overflow-x:auto;padding:0}
-.bd{display:inline-block;border:1px solid var(--gold);border-radius:16px;padding:3px 12px;font-size:13px;background:#fff;white-space:nowrap}.bd:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--c,#3b82f6);margin-right:7px}
+.bd{color:var(--ink);display:inline-block;border:1px solid var(--gold);border-radius:16px;padding:3px 12px;font-size:13px;background:#fff;white-space:nowrap}.bd:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--c,#3b82f6);margin-right:7px}
 .note{background:#fff4d6;color:#5a4300;border:1px solid var(--gold);border-radius:8px;padding:10px 14px;margin-bottom:14px}.lk{color:var(--g);font-weight:600;cursor:pointer;background:none;border:0;font:inherit}
 .md{position:fixed;inset:0;background:#0007;display:grid;place-items:center;padding:16px;overflow:auto;z-index:5}.md .card{max-width:860px;width:100%;max-height:92vh;overflow:auto}
 .cards{display:flex;gap:14px;flex-wrap:wrap}.idc{position:relative;width:280px;aspect-ratio:320/507;container-type:inline-size;background:#fff center/cover;border:1px solid #bbb;border-radius:8px;overflow:hidden;color:#111}
@@ -162,7 +162,7 @@ const fd=d=>{if(!d)return'';const[y,m,x]=d.split('-');return new Date(+y,+m-1,+x
 function qrSvg(e){try{if(!(e.tin||e.sss||e.gsis||e.phic||e.pagibig))return'';const q=qrcode(0,'M');q.addData(['CBSUA EMPLOYEE ID',e.empNo||'','TIN: '+(e.tin||'-'),'SSS: '+(e.sss||'-'),'GSIS: '+(e.gsis||'-'),'PhilHealth: '+(e.phic||'-'),'Pag-IBIG: '+(e.pagibig||'-')].join('\n'));q.make();return q.createSvgTag({cellSize:2,margin:0,scalable:true})}catch(x){return''}}
 function idCards(e,pr){
   // Positions are % of the card (measured from the F.jpg / B.jpg template guides); font sizes are cqw (% of card width).
-  const W=pr?1600:800,n=[e.first,e.mi,e.last,e.ext&&e.ext!='None'?e.ext:''].filter(Boolean).join(' ').toUpperCase(),q=qrSvg(e);
+  const W=pr?1200:800,n=[e.first,e.mi,e.last,e.ext&&e.ext!='None'?e.ext:''].filter(Boolean).join(' ').toUpperCase(),q=qrSvg(e);
   const K=(c,w)=>`left:${c-w/2}%;width:${w}%;text-align:center;white-space:normal;line-height:1.12;`,L='white-space:nowrap;overflow:hidden;text-overflow:ellipsis;',V='font-size:4.6cqw;font-weight:600;';
   return`<div class="cards${pr?' pr':''}"><div class=idc style="background-image:url(${img(S.tpl.front,W)})"><i class=ph style="background-image:url(${e._photo||img(e.photoId,W)})"></i>${P(n,0,56.4,K(56.5,84)+'font-weight:700;font-size:5.6cqw')}${P(e.position,0,67.4,K(56.5,84)+'font-size:4.8cqw;font-weight:500')}${e._sig||e.signId?`<img class=sg src="${e._sig||img(e.signId,W)}">`:''}${P(e.empNo,0,89.5,K(55,84)+'font-size:5.8cqw;font-weight:700;white-space:nowrap')}</div>
   <div class=idc style="background-image:url(${img(S.tpl.back,W)})">${P(e.address,15.3,6.6,'width:76%;white-space:normal;line-height:1.15;font-size:3.9cqw;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden')}${q?`<div class=qr>${q}</div>`:''}${P(fd(e.birth),48.7,38.7,V)}${P(e.blood,46.5,43.3,V)}${P(e.contact,48.7,47.9,V)}${P(e.email,15.3,56.4,L+'width:80%;font-size:4.3cqw')}${P(e.eName,0,67.8,K(56.5,80)+L+'font-size:4.8cqw;font-weight:700')}${P(e.eRel,0,71.4,K(56,80)+L+'font-size:4.2cqw')}${P(e.eContact,49.9,75.7,V)}</div></div>`}
@@ -208,11 +208,13 @@ function prt(){
   shell(`<h1>ID printing</h1><p class=sub>Verified IDs are ready to print. Printing sends the front and back to your card printer at 54 × 85.6 mm (CR80).</p>
   <div class=pills><button class="pill ${S.ptab=='verified'?'on':''}" data-a=ptab data-t=verified>Ready to print${rd.length?`<i>${rd.length}</i>`:''}</button><button class="pill ${S.ptab=='issued'?'on':''}" data-a=ptab data-t=issued>Printed${pd.length?`<i>${pd.length}</i>`:''}</button></div>
   ${rows.length?`<div class="card tw"><table><tr><th><input type=checkbox data-a=pall style="width:auto"><th>EMPLOYEE NO.<th>NAME<th>CAMPUS<th>EMPLOYMENT<th style="text-align:right">ACTION</tr>${rows.map(r=>`<tr><td><input type=checkbox class=pk value=${r.uid} ${S.sel?.includes(r.uid)?'checked':''} style="width:auto"><td><b>${esc(r.empNo)}</b><td>${esc(r.last)}, ${esc(r.first)}<td>${esc(r.campus)}<td>${esc(r.employment)}<td style="text-align:right"><button class="btn sm" data-a=print1 data-u=${r.uid}>${S.ptab=='verified'?'Print':'Reprint'}</button></tr>`).join('')}</table></div><div class=row style="justify-content:flex-start;margin-top:14px"><button class="btn alt" data-a=print>Print selected</button></div>`:`<div class=card style="text-align:center;color:var(--mut);padding:36px 20px">${S.ptab=='verified'?'No verified IDs waiting to be printed.':'No printed IDs yet.'}</div>`}`);S.sel=null}
-function doPrint(ids){
-  if(!ids.length)return toast('Select at least one employee');const h=$('#pr');h.innerHTML=ids.map(u=>idCards(S.rows.find(r=>r.uid==u),1)).join('');toast('Preparing print…');
+async function doPrint(ids){
+  if(!ids.length)return toast('Select at least one employee');const h=$('#pr');h.innerHTML=ids.map(u=>idCards(S.rows.find(r=>r.uid==u),1)).join('');toast('Loading images…');
+  const urls=[...new Set((h.innerHTML.match(/https:\/\/drive\.google\.com\/thumbnail\?[^"')]+/g)||[]).map(u=>u.replace(/&amp;/g,'&')))];
+  await Promise.all(urls.map(u=>new Promise(r=>{const i=new Image();i.onload=i.onerror=r;i.src=u;setTimeout(r,20000)})));
   window.onafterprint=async()=>{window.onafterprint=null;h.innerHTML='';const v=ids.filter(u=>S.rows.find(r=>r.uid==u).status=='verified');
     if(v.length&&confirm(`Mark ${v.length} printed ID(s) as issued?`)){for(const u of v)await setDoc(doc(db,'employees',u),{status:'issued',updatedAt:serverTimestamp()},{merge:true});toast('Marked as issued')}};
-  setTimeout(()=>window.print(),1500)}
+  await new Promise(r=>setTimeout(r,500));window.print()}
 // ---- Auth + events ----
 const domainOk=e=>(e||'').toLowerCase().endsWith('@'+CFG.domain);
 const A={
