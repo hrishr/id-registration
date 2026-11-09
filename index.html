@@ -29,7 +29,7 @@ table{width:100%;border-collapse:collapse}th{font-size:12px;color:var(--mut);tex
 .bd{display:inline-block;border:1px solid var(--gold);border-radius:16px;padding:3px 12px;font-size:13px;background:#fff;white-space:nowrap}.bd:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--c,#3b82f6);margin-right:7px}
 .note{background:#fff4d6;color:#5a4300;border:1px solid var(--gold);border-radius:8px;padding:10px 14px;margin-bottom:14px}.lk{color:var(--g);font-weight:600;cursor:pointer;background:none;border:0;font:inherit}
 .md{position:fixed;inset:0;background:#0007;display:grid;place-items:center;padding:16px;overflow:auto;z-index:5}.md .card{max-width:860px;width:100%;max-height:92vh;overflow:auto}
-.cards{display:flex;gap:14px;flex-wrap:wrap}.idc{position:relative;width:240px;aspect-ratio:320/507;background:#fff center/cover;border:1px solid #bbb;border-radius:8px;overflow:hidden;font-size:9px;color:#111}
+.cards{display:flex;gap:14px;flex-wrap:wrap}.idc{position:relative;width:280px;aspect-ratio:320/507;container-type:inline-size;background:#fff center/cover;border:1px solid #bbb;border-radius:8px;overflow:hidden;color:#111}
 .idc *{position:absolute}.idc span{white-space:nowrap}.idc .ph{width:52%;aspect-ratio:1;border-radius:50%;background:#ddd center/cover;left:30.6%;top:20.9%}.idc .sg{height:10%;left:30%;top:75%;object-fit:contain}
 .card .sub{color:var(--mut);margin:2px 0 14px}.rvc{border:1px solid var(--gold);border-radius:10px;margin:12px 0;overflow:hidden}.rvh{display:flex;justify-content:space-between;padding:10px 12px;font-weight:600}
 .rv{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-top:1px solid var(--line);font-size:14px}.rv span{color:var(--mut)}.rv b{font-weight:500;text-align:right}.miss{color:#b3261e}.ok{color:#0a7a3a}
@@ -138,10 +138,13 @@ async function confirmSubmit(){
 
 // ---- ID preview ----
 const P=(t,l,top,x='')=>`<span style="left:${l}%;top:${top}%;${x}">${esc(t)}</span>`;
+const fd=d=>{if(!d)return'';const[y,m,x]=d.split('-');return new Date(+y,+m-1,+x).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})};
 function idCards(e){
-  const n=[e.first,e.mi,e.last,e.ext&&e.ext!='None'?e.ext:''].filter(Boolean).join(' ').toUpperCase(),ct='transform:translateX(-50%);font-weight:700;',emg=e.eName?`${e.eName}`:'';
-  return`<div class=cards><div class=idc style="background-image:url(${img(S.tpl.front)})"><i class=ph style="background-image:url(${e._photo||img(e.photoId)})"></i>${P(n,50,59.5,ct+'font-size:12px')}${P(e.position,50,68.6,ct+'font-weight:500')}${e._sig||e.signId?`<img class=sg src="${e._sig||img(e.signId)}">`:''}${P(e.empNo,50,89,ct+'font-size:12px')}</div>
-  <div class=idc style="background-image:url(${img(S.tpl.back)})">${P(e.address,15,8)}${P(e.birth,48,39.8)}${P(e.blood,48,44.4)}${P(e.contact,48,49)}${P(e.email,15,57.4)}${P(emg,15,68.8)}${P(e.eRel,15,72)}${P(e.eContact,48,76.7)}</div></div>`}
+  // Font sizes use cqw (percent of card width) so text scales with the card. Positions are % of the card; adjust here to fine-tune.
+  const n=[e.first,e.mi,e.last,e.ext&&e.ext!='None'?e.ext:''].filter(Boolean).join(' ').toUpperCase();
+  const C='left:5%;width:90%;text-align:center;white-space:normal;line-height:1.12;',L='width:78%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;',V='font-size:4.6cqw;font-weight:600;';
+  return`<div class=cards><div class=idc style="background-image:url(${img(S.tpl.front)})"><i class=ph style="background-image:url(${e._photo||img(e.photoId)})"></i>${P(n,0,59.5,C+'font-weight:700;font-size:5.3cqw')}${P(e.position,0,68.8,C+'font-size:4.2cqw;font-weight:500')}${e._sig||e.signId?`<img class=sg src="${e._sig||img(e.signId)}">`:''}${P(e.empNo,0,89.4,C+'font-size:5cqw;font-weight:700;white-space:nowrap')}</div>
+  <div class=idc style="background-image:url(${img(S.tpl.back)})">${P(e.address,15,8.6,'width:78%;white-space:normal;line-height:1.25;font-size:4.2cqw;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden')}${P(fd(e.birth),49,38.8,V)}${P(e.blood,49,43.8,V)}${P(e.contact,49,48.8,V)}${P(e.email,15,57.9,L+'font-size:4.3cqw')}${P(e.eName,15,69,L+'font-size:4.8cqw;font-weight:700')}${P(e.eRel,15,72.4,L+'font-size:4.2cqw')}${P(e.eContact,49,75.5,V)}</div></div>`}
 
 // ---- Admin ----
 const sdate=r=>r.submittedAt?.toDate?r.submittedAt.toDate().toISOString().slice(0,10):'—';
