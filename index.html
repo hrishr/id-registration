@@ -15,7 +15,7 @@ header{background:linear-gradient(90deg,#1f4b30,#2d6446);border-bottom:5px solid
 .dt{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:10px}.cnt[hidden]{display:none}
 @media(max-width:640px){.ttl{font-size:19px}.tsub{font-size:9px}.tb{gap:10px}}
 .idc .qr{left:36.4%;top:13.7%;width:37.3%;aspect-ratio:1;background:#fff;padding:1.15%;box-sizing:border-box}.idc .t{display:block;line-height:1;white-space:normal;font-family:Outfit,Inter,sans-serif}.idc .fit{white-space:nowrap}.idc .qr svg{position:static;width:100%;height:100%;display:block}
-#pr{display:none}#pr.front .idc+.idc,#pr.back .idc:first-child{display:none}.pr .idc{width:54mm;height:85.6mm;aspect-ratio:auto;border:0;border-radius:0}
+#pr{display:none}.pr .idc{width:54mm;height:85.6mm;aspect-ratio:auto;border:0;border-radius:0}
 @media print{body>*:not(#pr){display:none!important}body{display:block;background:#fff}#pr{display:block}#pr .cards{display:block;margin:0}#pr *{-webkit-print-color-adjust:exact;print-color-adjust:exact}#pr .idc{margin:0;break-after:page;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}#pr .cards:last-child .idc:last-child{break-after:auto;page-break-after:auto}@page{size:54mm 85.6mm;margin:0}}.bar{display:flex;align-items:center;gap:14px;height:56px}
 .bar b{flex:1;display:flex;gap:10px;align-items:center;font-size:16px}.bar nav{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 nav a{cursor:pointer;color:var(--mut);font-size:14px;padding:6px 9px;border-radius:6px}nav a.on{color:var(--ink);font-weight:600}
@@ -130,7 +130,7 @@ function me(){
 `);
   S.lp=S.ls=null;prev();
   if(!lock){
-    $('#ph').onchange=async x=>{try{toast('Uploading photo…');const u=await b64(x.target.files[0],800,'image/jpeg');$('#pp').style.backgroundImage=`url(${u})`;S.lp=u;prev();await patch({photoId:await up('photo',u)});toast('Photo saved')}catch(z){toast(z.message)}};
+    $('#ph').onchange=async x=>{try{toast('Uploading photo…');const u=await b64(x.target.files[0],800,'image/jpeg');$('#pp').style.backgroundImage=`url(${u})`;S.lp=u;prev();const old=S.emp?.photoId,id=await up('photo',u);await patch({photoId:id});drop(old);toast('Photo saved')}catch(z){toast(z.message)}};
     const c=$('#pad'),g=c.getContext('2d');let on=0;g.lineWidth=6;g.lineCap='round';
     const p=ev=>{const r=c.getBoundingClientRect();return[(ev.clientX-r.left)*c.width/r.width,(ev.clientY-r.top)*c.height/r.height]};
     c.onpointerdown=ev=>{on=1;c.setPointerCapture(ev.pointerId);g.beginPath();g.moveTo(...p(ev))};
@@ -148,6 +148,7 @@ function inkTrim(c){ // removes the white background, darkens thin strokes and c
   const u=document.createElement('canvas'),t=document.createElement('canvas'),p=8,w=x1-x0+1+2*p,h=y1-y0+1+2*p;u.width=c.width;u.height=c.height;u.getContext('2d').putImageData(im,0,0);t.width=w;t.height=h;t.getContext('2d').drawImage(u,x0-p,y0-p,w,h,0,0,w,h);return t.toDataURL('image/png')}
 const padData=()=>inkTrim($('#pad'));
 const trimImg=src=>new Promise(res=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;c.getContext('2d').drawImage(im,0,0);res(inkTrim(c))};im.onerror=()=>res(src);im.src=src});
+async function drop(id){if(!id)return;try{const token=await auth.currentUser.getIdToken();await fetch(CFG.driveScript,{method:'POST',body:JSON.stringify({token,action:'delete',id})})}catch(x){}}
 async function dget(id){const token=await auth.currentUser.getIdToken(),r=await fetch(CFG.driveScript,{method:'POST',body:JSON.stringify({token,action:'get',id})}),j=await r.json();if(j.error)throw Error(j.error);return j.data}
 const sigP={};S.sc={};
 const sigLoad=id=>!id?Promise.resolve():(sigP[id]||=(async()=>{try{S.sc[id]=await trimImg(await dget(id))}catch(x){S.sc[id]=null}prev()})());
@@ -162,9 +163,9 @@ function submit(){
   <div class=row style="justify-content:flex-end"><button class="btn alt" data-a=close>Edit details</button><button class=btn data-a=confirm ${miss?'disabled':''}>Confirm & submit</button></div></div>`;document.body.append(m)}
 async function confirmSubmit(){
   document.querySelector('.md')?.remove();toast('Submitting…');
-  try{const o=vals();if(S.sig)o.signId=await up('signature',padData());
+  try{const o=vals(),old=S.sig?S.emp?.signId:null;if(S.sig)o.signId=await up('signature',padData());
     Object.assign(o,{status:'pending',ownerEmail:S.u.email,updatedAt:serverTimestamp(),submittedAt:serverTimestamp(),remarks:''});
-    await setDoc(doc(db,'employees',S.u.uid),o,{merge:true});S.emp={...S.emp,...o};toast('Submitted for verification');me()}catch(x){toast('Could not submit: '+x.message)}}
+    await setDoc(doc(db,'employees',S.u.uid),o,{merge:true});S.emp={...S.emp,...o};drop(old);toast('Submitted for verification');me()}catch(x){toast('Could not submit: '+x.message)}}
 
 // ---- ID preview ----
 const P=(t,l,top,x='')=>`<span style="left:${l}%;top:${top}%;${x}">${esc(t)}</span>`;
@@ -217,16 +218,15 @@ async function setStatus(uid,s){
 function tpl(){
   const box=(k,l)=>`<div class=card><div class=hd><b>${l} face</b></div><div class=pv style="height:260px;background-image:url(${img(S.tpl[k])})"></div><label>JPEG or PNG, at least 600px on the longer side</label><input type=file accept="image/*" data-k=${k}><button class="btn alt sm" style="margin-top:8px" data-a=tdel data-k=${k}>Remove ${k} face</button></div>`;
   shell(`<h1>ID card template</h1><p class=sub>One university-wide two-sided design. Employee details are placed on top of it in previews.</p><div class=grid>${box('front','Front')}${box('back','Back')}</div>`);
-  app.querySelectorAll('input[type=file]').forEach(i=>i.onchange=async()=>{toast('Uploading…');try{const id=await up('template',await b64(i.files[0],1200,'image/jpeg'));S.tpl[i.dataset.k]=id;await setDoc(doc(db,'settings','idTemplate'),{[i.dataset.k]:id,updatedAt:serverTimestamp()},{merge:true});toast('Template updated');tpl()}catch(x){toast(x.message)}})}
+  app.querySelectorAll('input[type=file]').forEach(i=>i.onchange=async()=>{toast('Uploading…');try{const old=S.tpl[i.dataset.k],id=await up('template',await b64(i.files[0],1200,'image/jpeg'));S.tpl[i.dataset.k]=id;await setDoc(doc(db,'settings','idTemplate'),{[i.dataset.k]:id,updatedAt:serverTimestamp()},{merge:true});drop(old);toast('Template updated');tpl()}catch(x){toast(x.message)}})}
 
 function prt(){
   S.ptab=S.ptab||'verified';const rd=S.rows.filter(r=>r.status=='verified'),pd=S.rows.filter(r=>r.status=='issued'),rows=S.ptab=='verified'?rd:pd;
   shell(`<h1>ID printing</h1><p class=sub>Verified IDs are ready to print. Printing sends the front and back to your card printer at 54 × 85.6 mm (CR80). In the print window, turn on two-sided printing so both sides land on one card.</p>
   <div class=pills><button class="pill ${S.ptab=='verified'?'on':''}" data-a=ptab data-t=verified>Ready to print${rd.length?`<i>${rd.length}</i>`:''}</button><button class="pill ${S.ptab=='issued'?'on':''}" data-a=ptab data-t=issued>Printed${pd.length?`<i>${pd.length}</i>`:''}</button></div>
-  <div class=row style="justify-content:flex-start;align-items:center;margin-bottom:14px"><label style="color:#fff;margin:0">Print sides</label><select id=ps style="width:auto"><option value="">Front and back (one card)</option><option value=front>Front only</option><option value=back>Back only</option></select></div>
   ${rows.length?`<div class="card tw"><table><tr><th><input type=checkbox data-a=pall style="width:auto"><th>EMPLOYEE NO.<th>NAME<th>CAMPUS<th>EMPLOYMENT<th style="text-align:right">ACTION</tr>${rows.map(r=>`<tr><td><input type=checkbox class=pk value=${r.uid} ${S.sel?.includes(r.uid)?'checked':''} style="width:auto"><td><b>${esc(r.empNo)}</b><td>${esc(r.last)}, ${esc(r.first)}<td>${esc(r.campus)}<td>${esc(r.employment)}<td style="text-align:right"><button class="btn sm" data-a=print1 data-u=${r.uid}>${S.ptab=='verified'?'Print':'Reprint'}</button></tr>`).join('')}</table></div><div class=row style="justify-content:flex-start;margin-top:14px"><button class="btn alt" data-a=print>Print selected</button></div>`:`<div class=card style="text-align:center;color:var(--mut);padding:36px 20px">${S.ptab=='verified'?'No verified IDs waiting to be printed.':'No printed IDs yet.'}</div>`}`);S.sel=null}
 async function doPrint(ids){
-  if(!ids.length)return toast('Select at least one employee');await Promise.all(ids.map(u=>sigLoad(S.rows.find(r=>r.uid==u).signId)));const h=$('#pr');h.className=$('#ps')?.value||'';h.innerHTML=ids.map(u=>idCards(S.rows.find(r=>r.uid==u),1)).join('');toast('Loading images…');
+  if(!ids.length)return toast('Select at least one employee');await Promise.all(ids.map(u=>sigLoad(S.rows.find(r=>r.uid==u).signId)));const h=$('#pr');h.innerHTML=ids.map(u=>idCards(S.rows.find(r=>r.uid==u),1)).join('');toast('Loading images…');
   const urls=[...new Set((h.innerHTML.match(/https:\/\/drive\.google\.com\/thumbnail\?[^"')]+/g)||[]).map(u=>u.replace(/&amp;/g,'&')))];
   await Promise.all(urls.map(u=>new Promise(r=>{const i=new Image();i.onload=i.onerror=r;i.src=u;setTimeout(r,20000)})));
   window.onafterprint=async()=>{window.onafterprint=null;h.innerHTML='';const v=ids.filter(u=>S.rows.find(r=>r.uid==u).status=='verified');
@@ -238,7 +238,7 @@ const A={
   async google(){try{const p=new GoogleAuthProvider();p.setCustomParameters({hd:CFG.domain,prompt:'select_account'});await signInWithPopup(auth,p)}catch(x){toast(x.message)}},
   out:()=>signOut(auth),reload:async()=>{await auth.currentUser.reload();location.reload()},
   nav(a){S.view=a.dataset.v;S.pg=0;({tpl,prt}[S.view]||ver)()},pall(a){document.querySelectorAll('.pk').forEach(x=>x.checked=a.checked)},print(){doPrint([...document.querySelectorAll('.pk:checked')].map(x=>x.value))},print1:a=>doPrint([a.dataset.u]),ptab(a){S.ptab=a.dataset.t;prt()},tab(a){S.tab=a.dataset.t;S.pg=0;ver()},pg(a){S.pg=(S.pg||0)+ +a.dataset.d;ver()},review:a=>review(a.dataset.u),close:()=>document.querySelector('.md').remove(),
-  set:a=>setStatus(a.dataset.u,a.dataset.s),clr:()=>S.clear(),submit,confirm:confirmSubmit,async sigsave(){if(!S.sig)return toast('Draw or upload your signature first');try{toast('Saving signature…');const du=padData(),id=await up('signature',du);await patch({signId:id});S.ls=du;S.sig=null;prev();$('#sp').style.backgroundImage=`url(${img(id)})`;S.clear();toast('Signature saved')}catch(x){toast(x.message)}},
+  set:a=>setStatus(a.dataset.u,a.dataset.s),clr:()=>S.clear(),submit,confirm:confirmSubmit,async sigsave(){if(!S.sig)return toast('Draw or upload your signature first');try{toast('Saving signature…');const du=padData(),old=S.emp?.signId,id=await up('signature',du);await patch({signId:id});drop(old);S.ls=du;S.sig=null;prev();$('#sp').style.backgroundImage=`url(${img(id)})`;S.clear();toast('Signature saved')}catch(x){toast(x.message)}},
   async editrec(){await setDoc(doc(db,'employees',S.u.uid),{status:'draft',updatedAt:serverTimestamp()},{merge:true});S.emp.status='draft';me()},
   reissue(){const m=document.createElement('div');m.className='md';const o=(v,t)=>`<label style="display:flex;gap:8px;align-items:center;font-size:15px;color:var(--ink)"><input type=radio name=rr value="${v}" style="width:auto" ${v=='Lost ID'?'checked':''}> ${v} <small style="color:var(--mut)">(${t})</small></label>`;
     m.innerHTML=`<div class=card style="max-width:520px"><b style="font-size:18px">Request ID reissue</b><p class=sub>Choose the reason, then upload the required document.</p>${o('Lost ID','upload affidavit of loss')}${o('Re-appointment or new designation','upload appointment letter')}<label style="margin-top:12px" id=rl>Affidavit of loss (image or PDF)</label><input type=file id=rf accept="image/*,application/pdf"><div class=row style="justify-content:flex-end;margin-top:16px"><button class="btn alt" data-a=close>Cancel</button><button class=btn data-a=rsend>Submit request</button></div></div>`;
