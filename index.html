@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CBSUA Digital Employee ID Registration</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--g:#11642f;--gd:#1f4b30;--gold:#e9b730;--bg:#eaf4ec;--ink:#14261a;--mut:#5b6b60;--line:#e7d9a8}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;flex-direction:column;font:15px/1.5 Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg)}
+#app{flex:1;display:flex;flex-direction:column}.w{max-width:1000px;margin:0 auto;padding:0 20px;width:100%}
+header{background:#fff;border-bottom:1px solid var(--gold)}.bar{display:flex;align-items:center;gap:14px;height:56px}
+.bar b{flex:1;display:flex;gap:10px;align-items:center;font-size:16px}.bar nav{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+nav a{cursor:pointer;color:var(--mut);font-size:14px;padding:6px 9px;border-radius:6px}nav a.on{color:var(--ink);font-weight:600}
+.cnt{background:#e5322d;color:#fff;border-radius:9px;font-size:11px;padding:1px 6px;margin-left:4px}
+.btn{font:600 14px Inter,sans-serif;background:var(--g);color:#fff;border:1px solid var(--g);border-radius:8px;padding:10px 16px;cursor:pointer}
+.btn.alt{background:#fff;color:var(--ink);border-color:var(--gold)}.btn.sm{padding:6px 12px}.btn.red{background:#b3261e;border-color:#b3261e}.btn:disabled{opacity:.5}
+.hero{flex:1;display:grid;place-items:center;padding:40px 20px;text-align:center}.hero .c{max-width:470px}
+.hero h3{color:var(--g);font-size:20px;margin:18px 0 4px;letter-spacing:.2px}.hero h1{font-size:34px;line-height:1.15;margin:0 0 14px}
+.hero p{color:var(--mut);margin:0 0 22px}.hero small{display:block;margin-top:26px;color:var(--mut)}.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.af{text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:10px}.af .btn{width:100%}.or{text-align:center;color:var(--mut);font-size:13px}
+.dk{background:var(--g);flex:1;padding:36px 0 60px;color:#fff}.dk h1{margin:0;font-size:26px}.sub{margin:2px 0 20px;color:#cfe6d6}
+.card{background:#fff;color:var(--ink);border:1px solid var(--gold);border-radius:12px;padding:20px}.hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:16px}
+label{display:block;font-size:13px;font-weight:500;color:var(--mut);margin-bottom:3px}
+input,select{width:100%;font:inherit;padding:9px 11px;border:1px solid #cbd5cd;border-radius:8px;background:#fff}input:disabled,select:disabled{background:#f3f5f3}
+.pv{height:150px;border:1px dashed #9db3a3;border-radius:8px;margin-bottom:6px;background:#f7faf7 center/contain no-repeat}canvas{width:100%;height:150px;border:1px dashed #9db3a3;border-radius:8px;background:#fff;touch-action:none}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.pill{background:#fff;color:var(--ink);border:1px solid var(--gold);border-radius:20px;padding:4px 14px;font-size:14px;cursor:pointer}
+.pill.on{background:#f0d98c}.pill i{font-style:normal;background:#0001;border-radius:8px;padding:0 6px;margin-left:5px;font-size:12px}
+table{width:100%;border-collapse:collapse}th{font-size:12px;color:var(--mut);text-align:left;font-weight:500;padding:12px 10px}td{padding:14px 10px;border-top:1px solid var(--line)}.tw{overflow-x:auto;padding:0}
+.bd{display:inline-block;border:1px solid var(--gold);border-radius:16px;padding:3px 12px;font-size:13px;background:#fff;white-space:nowrap}.bd:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--c,#3b82f6);margin-right:7px}
+.note{background:#fff4d6;color:#5a4300;border:1px solid var(--gold);border-radius:8px;padding:10px 14px;margin-bottom:14px}.lk{color:var(--g);font-weight:600;cursor:pointer;background:none;border:0;font:inherit}
+.md{position:fixed;inset:0;background:#0007;display:grid;place-items:center;padding:16px;overflow:auto;z-index:5}.md .card{max-width:860px;width:100%;max-height:92vh;overflow:auto}
+.cards{display:flex;gap:14px;flex-wrap:wrap}.idc{position:relative;width:240px;aspect-ratio:320/507;background:#fff center/cover;border:1px solid #bbb;border-radius:8px;overflow:hidden;font-size:9px;color:#111}
+.idc *{position:absolute}.idc span{white-space:nowrap}.idc .ph{width:52%;aspect-ratio:1;border-radius:50%;background:#ddd center/cover;left:30.6%;top:20.9%}.idc .sg{height:10%;left:30%;top:75%;object-fit:contain}
+footer{background:var(--gd);border-top:3px solid var(--gold);color:#e6f2e8;text-align:center;font:600 12px Inter;padding:18px;text-transform:uppercase}
+#t{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#14261a;color:#fff;padding:10px 18px;border-radius:8px;display:none;z-index:9}
+</style></head><body><div id="app"></div><footer>© 2026 Office of the Human Resource Management and Development</footer><div id="t"></div>
+<script type="module">
+// ===== SETUP: paste your values (see README steps) =====
+const CFG={
+  firebase:{apiKey:"PASTE",authDomain:"PASTE.firebaseapp.com",projectId:"PASTE",appId:"PASTE"},
+  driveScript:"PASTE_APPS_SCRIPT_WEB_APP_URL",   // Code.gs deployment (Drive uploads)
+  domain:"cbsua.edu.ph"
+};
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getAuth,onAuthStateChanged,signInWithPopup,GoogleAuthProvider,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import{getFirestore,doc,getDoc,setDoc,collection,getDocs,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const fb=initializeApp(CFG.firebase),auth=getAuth(fb),db=getFirestore(fb);
+const $=s=>document.querySelector(s),app=$('#app');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const img=id=>id?`https://drive.google.com/thumbnail?id=${id}&sz=w800`:'';
+const toast=m=>{const t=$('#t');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3800)};
+const S={u:null,admin:false,view:'me',tab:'pending',rows:[],emp:null,tpl:{},photo:null,sig:null};
+const CAMPUS=['Pili','Calabanga','Sipocot','Pasacao'],EMP=['Permanent','Casual','Temporary','Job Order/Contract of Service','Project Based'],BT=['A+','A-','B+','B-','AB+','AB-','O+','O-'];
+const F=[['empNo','Employee No.'],['last','Last name'],['first','First name'],['middle','Middle name'],['position','Position'],['campus','Campus','sel',CAMPUS],['employment','Employment','sel',EMP],['address','Permanent address'],['birth','Birthdate','date'],['blood','Blood type','sel',BT],['contact','Contact no.','tel'],['email','E-mail address','email'],['eName','Emergency contact: full name'],['eRel','Relationship'],['eContact','Emergency contact no.','tel']];
+const ST={draft:['Draft','#9aa5a0'],pending:['Pending verification','#3b82f6'],verified:['Verified','#16a34a'],issued:['Issued','#0d9488'],inactive:['Inactive','#d97706'],revoked:['Revoked','#dc2626']};
+const badge=s=>`<span class=bd style="--c:${ST[s][1]}">${ST[s][0]}</span>`;
+const SEAL=(n=96)=>`<svg width=${n} height=${n} viewBox="0 0 100 100" role=img aria-label="CBSUA seal"><circle cx=50 cy=50 r=48 fill="#e8e03a" stroke="#116432" stroke-width=3 /><circle cx=50 cy=50 r=36 fill="#116432"/><path d="M50 22 78 70H22Z" fill="#e8e03a"/><path d="M50 36 64 62H36Z" fill="#116432"/></svg>`;
+
+// ---- Google Drive upload (photos, e-signatures, ID template only) ----
+async function up(kind,dataUrl){
+  const token=await auth.currentUser.getIdToken();
+  const r=await fetch(CFG.driveScript,{method:'POST',body:JSON.stringify({token,kind,mime:dataUrl.slice(5,dataUrl.indexOf(';')),data:dataUrl.split(',')[1]})});
+  const j=await r.json();if(j.error)throw Error(j.error);return j.id}
+async function b64(f,max,type){const b=await createImageBitmap(f),k=Math.min(1,max/Math.max(b.width,b.height)),c=document.createElement('canvas');c.width=b.width*k;c.height=b.height*k;const x=c.getContext('2d');if(type=='image/jpeg'){x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height)}x.drawImage(b,0,0,c.width,c.height);return c.toDataURL(type,.88)}
+
+// ---- Layout ----
+function shell(inner){
+  const n=S.rows.filter(r=>r.status=='pending').length,v=S.view,a=x=>v==x?'on':'';
+  app.innerHTML=`<header><div class="w bar"><b>${SEAL(34)}CBSUA Employee ID</b><nav>${S.admin?`<a data-a=nav data-v=ver class=${a('ver')}>Verification${n?`<span class=cnt>${n}</span>`:''}</a><a data-a=nav data-v=re class=${a('re')}>Reissue requests</a><a data-a=nav data-v=tpl class=${a('tpl')}>ID template</a>`:`<a class=on>My employee ID</a>`}<button class="btn alt sm" data-a=out>Sign out</button></nav></div></header><main class=dk><div class=w>${inner}</div></main>`}
+function landing(mode){
+  app.innerHTML=`<main class=hero><div class=c>${SEAL()}<h3>CENTRAL BICOL STATE UNIVERSITY OF AGRICULTURE</h3><h1>Digital Employee ID Registration</h1>
+  <p>Register with your school institutional email to submit your employee ID information across the Pili, Calabanga, Sipocot, and Pasacao campuses.</p>
+  ${mode?`<div class=af><button class="btn alt" data-a=google>Continue with Google (@${CFG.domain})</button><div class=or>or use your institutional email</div>
+  <div><label>Institutional email</label><input id=em type=email placeholder="name@${CFG.domain}" autocomplete=email></div><div><label>Password</label><input id=pw type=password minlength=8 autocomplete=${mode=='up'?'new-password':'current-password'}></div>
+  <button class=btn data-a=emailGo data-m=${mode}>${mode=='up'?'Create your account':'Sign in'}</button><button class=lk data-a=mode data-m=${mode=='up'?'in':'up'}>${mode=='up'?'Already registered? Sign in':'New here? Create your account'}</button></div>`
+  :`<div class=row><button class=btn data-a=mode data-m=up>Create your account</button><button class="btn alt" data-a=mode data-m=in>Sign in</button></div>`}
+  <small>Institutional email required · For CBSUA employees</small></div></main>`}
+function unverified(){app.innerHTML=`<main class=hero><div class=c><h1>Verify your email</h1><p>We sent a verification link to ${esc(auth.currentUser.email)}. Open it, then continue.</p><div class=row><button class=btn data-a=reload>I verified my email</button><button class="btn alt" data-a=out>Sign out</button></div></div></main>`}
+
+// ---- Employee ----
+const fld=([k,l,t,o],e,d)=>`<div><label>${l}</label>${t=='sel'?`<select name=${k} ${d}><option value="">Select</option>${o.map(x=>`<option ${x==e[k]?'selected':''}>${x}</option>`).join('')}</select>`:`<input name=${k} type=${t||'text'} value="${esc(e[k]??(k=='email'?S.u.email:''))}" ${d}>`}</div>`;
+function me(){
+  const e=S.emp||{},st=e.status||'draft',lock=st!='draft',d=lock?'disabled':'';S.photo=S.sig=null;
+  shell(`<h1>My employee ID</h1><p class=sub>Fill in your details exactly as they should appear on your ID.</p>
+  ${e.remarks&&st=='draft'?`<div class=note>Returned by HR: ${esc(e.remarks)}</div>`:''}
+  <div class=card><div class=hd><b>Registration status</b>${badge(st)}</div><div class=grid>${F.map(f=>fld(f,e,d)).join('')}</div>
+  <div class=grid><div><label>ID photo (plain background, face centered)</label><div class=pv id=pp style="background-image:url(${img(e.photoId)})"></div><input type=file id=ph accept="image/*" ${d}></div>
+  <div><label>E-signature (draw, or upload an image)</label>${e.signId&&lock?`<div class=pv style="background-image:url(${img(e.signId)})"></div>`:`<canvas id=pad width=500 height=190></canvas><div class=row style="justify-content:flex-start;margin-top:6px"><button class="btn alt sm" data-a=clr>Clear</button><input type=file id=sf accept="image/*" style="width:auto"></div>`}</div></div>
+  <div class=row style="justify-content:flex-start">${st=='draft'?`<button class="btn alt" data-a=save data-s=0>Save draft</button><button class=btn data-a=save data-s=1>Submit for verification</button>`:''}
+  ${st=='issued'&&!e.reissue?`<button class=btn data-a=reissue>Request ID reissue</button>`:''}${e.reissue?'<span class=bd>Reissue requested</span>':''}</div></div>
+  ${st=='issued'||st=='verified'?`<h3 style="margin:24px 0 10px">ID preview</h3>${idCards(e)}`:''}`);
+  if(!lock){
+    $('#ph').onchange=async x=>{S.photo=await b64(x.target.files[0],800,'image/jpeg');$('#pp').style.backgroundImage=`url(${S.photo})`};
+    const c=$('#pad'),g=c.getContext('2d');let on=0;g.lineWidth=3;g.lineCap='round';
+    const p=ev=>{const r=c.getBoundingClientRect();return[(ev.clientX-r.left)*c.width/r.width,(ev.clientY-r.top)*c.height/r.height]};
+    c.onpointerdown=ev=>{on=1;c.setPointerCapture(ev.pointerId);g.beginPath();g.moveTo(...p(ev))};
+    c.onpointermove=ev=>{if(on){g.lineTo(...p(ev));g.stroke();S.sig='pad'}};c.onpointerup=()=>on=0;
+    S.clear=()=>{g.clearRect(0,0,c.width,c.height);S.sig=null};
+    $('#sf').onchange=async x=>{const u=await b64(x.target.files[0],600,'image/png');const im=new Image();im.onload=()=>{g.clearRect(0,0,c.width,c.height);const k=Math.min(c.width/im.width,c.height/im.height);g.drawImage(im,0,0,im.width*k,im.height*k);S.sig='pad'};im.src=u}}}
+async function save(sub){
+  const d=Object.fromEntries(F.map(([k])=>[k,app.querySelector(`[name=${k}]`).value.trim()])),e=S.emp||{};
+  toast('Saving…');
+  try{
+    if(S.photo)d.photoId=await up('photo',S.photo);else d.photoId=e.photoId||null;
+    d.signId=S.sig?await up('signature',$('#pad').toDataURL('image/png')):e.signId||null;
+    if(sub){const miss=F.filter(([k])=>k!='middle'&&!d[k]).map(f=>f[1]);if(!d.photoId)miss.push('ID photo');if(!d.signId)miss.push('E-signature');
+      if(miss.length)return toast('Complete: '+miss.slice(0,4).join(', ')+(miss.length>4?'…':''))}
+    d.status=sub?'pending':'draft';d.ownerEmail=S.u.email;d.updatedAt=serverTimestamp();if(sub){d.submittedAt=serverTimestamp();d.remarks=''}
+    await setDoc(doc(db,'employees',S.u.uid),d,{merge:true});S.emp={...e,...d};toast(sub?'Submitted for verification':'Draft saved');me()
+  }catch(x){toast('Could not save: '+x.message)}}
+
+// ---- ID preview ----
+const P=(t,l,top,x='')=>`<span style="left:${l}%;top:${top}%;${x}">${esc(t)}</span>`;
+function idCards(e){
+  const n=[e.first,e.middle,e.last].filter(Boolean).join(' ').toUpperCase(),ct='transform:translateX(-50%);font-weight:700;',emg=e.eName?`${e.eName}`:'';
+  return`<div class=cards><div class=idc style="background-image:url(${img(S.tpl.front)})"><i class=ph style="background-image:url(${img(e.photoId)})"></i>${P(n,50,59.5,ct+'font-size:12px')}${P(e.position,50,68.6,ct+'font-weight:500')}${e.signId?`<img class=sg src="${img(e.signId)}">`:''}${P(e.empNo,50,89,ct+'font-size:12px')}</div>
+  <div class=idc style="background-image:url(${img(S.tpl.back)})">${P(e.address,15,8)}${P(e.birth,48,39.8)}${P(e.blood,48,44.4)}${P(e.contact,48,49)}${P(e.email,15,57.4)}${P(emg,15,68.8)}${P(e.eRel,15,72)}${P(e.eContact,48,76.7)}</div></div>`}
+
+// ---- Admin ----
+const sdate=r=>r.submittedAt?.toDate?r.submittedAt.toDate().toISOString().slice(0,10):'—';
+async function loadAdmin(){
+  S.rows=(await getDocs(collection(db,'employees'))).docs.map(d=>({uid:d.id,...d.data()}));
+  const t=await getDoc(doc(db,'settings','idTemplate'));S.tpl=t.exists()?t.data():{}}
+function ver(){
+  const re=S.view=='re',rows=re?S.rows.filter(r=>r.reissue):S.rows.filter(r=>r.status==S.tab);
+  shell(`<h1>${re?'Reissue requests':'Employee verification'}</h1><p class=sub>${re?'Issued IDs that employees asked to replace.':'Review submitted employee records and manage the verification workflow.'}</p>
+  ${re?'':`<div class=pills>${Object.keys(ST).map(k=>`<button class="pill ${S.tab==k?'on':''}" data-a=tab data-t=${k}>${ST[k][0]}<i>${S.rows.filter(r=>r.status==k).length}</i></button>`).join('')}</div>`}
+  <div class="card tw"><table><tr><th>EMPLOYEE NO.<th>NAME<th>CAMPUS<th>EMPLOYMENT<th>SUBMITTED<th>STATUS<th></tr>${rows.map(r=>`<tr><td><b>${esc(r.empNo)}</b><td>${esc(r.last)}, ${esc(r.first)}<td>${esc(r.campus)}<td>${esc(r.employment)}<td>${sdate(r)}<td>${badge(r.status)}<td><button class=lk data-a=review data-u=${r.uid}>Review</button></tr>`).join('')||'<tr><td colspan=7 style="color:var(--mut)">No records here yet.</tr>'}</table></div>`)}
+function review(uid){
+  const r=S.rows.find(x=>x.uid==uid),b=(s,l,c='')=>`<button class="btn sm ${c}" data-a=set data-u=${uid} data-s=${s}>${l}</button>`;
+  const acts={pending:b('verified','Verify')+b('draft','Return to employee','alt'),verified:b('issued','Mark as issued')+b('inactive','Set inactive','alt'),issued:(r.reissue?b('verified','Approve reissue'):'')+b('inactive','Set inactive','alt')+b('revoked','Revoke','red'),inactive:b('verified','Reactivate'),revoked:b('verified','Reinstate','alt')}[r.status]||'';
+  const m=document.createElement('div');m.className='md';m.innerHTML=`<div class=card><div class=hd><b>${esc(r.first)} ${esc(r.last)} · ${esc(r.empNo)}</b>${badge(r.status)}</div>
+  <div class=grid>${F.map(([k,l])=>`<div><label>${l}</label>${esc(r[k])||'—'}</div>`).join('')}</div>${idCards(r)}
+  <div class=row style="justify-content:flex-start;margin-top:16px">${acts}<button class="btn alt sm" data-a=close>Close</button></div></div>`;document.body.append(m)}
+async function setStatus(uid,s){
+  let remarks='';if(s=='draft'){remarks=prompt('Tell the employee what to fix:');if(!remarks)return}
+  const x={status:s,remarks,updatedAt:serverTimestamp()};if(s=='verified')x.reissue=false;
+  await setDoc(doc(db,'employees',uid),x,{merge:true});Object.assign(S.rows.find(r=>r.uid==uid),x);document.querySelector('.md')?.remove();toast('Status updated');ver()}
+function tpl(){
+  const box=(k,l)=>`<div class=card><div class=hd><b>${l} face</b></div><div class=pv style="height:260px;background-image:url(${img(S.tpl[k])})"></div><label>JPEG or PNG, at least 600px on the longer side</label><input type=file accept="image/*" data-k=${k}><button class="btn alt sm" style="margin-top:8px" data-a=tdel data-k=${k}>Remove ${k} face</button></div>`;
+  shell(`<h1>ID card template</h1><p class=sub>One university-wide two-sided design. Employee details are placed on top of it in previews.</p><div class=grid>${box('front','Front')}${box('back','Back')}</div>`);
+  app.querySelectorAll('input[type=file]').forEach(i=>i.onchange=async()=>{toast('Uploading…');try{const id=await up('template',await b64(i.files[0],1200,'image/jpeg'));S.tpl[i.dataset.k]=id;await setDoc(doc(db,'settings','idTemplate'),{[i.dataset.k]:id,updatedAt:serverTimestamp()},{merge:true});toast('Template updated');tpl()}catch(x){toast(x.message)}})}
+
+// ---- Auth + events ----
+const domainOk=e=>(e||'').toLowerCase().endsWith('@'+CFG.domain);
+const A={
+  mode:a=>landing(a.dataset.m),
+  async google(){try{const p=new GoogleAuthProvider();p.setCustomParameters({hd:CFG.domain,prompt:'select_account'});await signInWithPopup(auth,p)}catch(x){toast(x.message)}},
+  async emailGo(a){const e=$('#em').value.trim().toLowerCase(),p=$('#pw').value;if(!domainOk(e))return toast(`Use your @${CFG.domain} email`);
+    try{if(a.dataset.m=='up'){const c=await createUserWithEmailAndPassword(auth,e,p);await sendEmailVerification(c.user)}else await signInWithEmailAndPassword(auth,e,p)}catch(x){toast(x.message.replace('Firebase: ',''))}},
+  out:()=>signOut(auth),reload:async()=>{await auth.currentUser.reload();location.reload()},
+  nav(a){S.view=a.dataset.v;S.view=='tpl'?tpl():ver()},tab(a){S.tab=a.dataset.t;ver()},review:a=>review(a.dataset.u),close:()=>document.querySelector('.md').remove(),
+  set:a=>setStatus(a.dataset.u,a.dataset.s),clr:()=>S.clear(),save:a=>save(a.dataset.s=='1'),
+  async reissue(){await setDoc(doc(db,'employees',S.u.uid),{reissue:true,updatedAt:serverTimestamp()},{merge:true});S.emp.reissue=true;me()},
+  async tdel(a){await setDoc(doc(db,'settings','idTemplate'),{[a.dataset.k]:null},{merge:true});S.tpl[a.dataset.k]=null;tpl()}};
+app.onclick=e=>{const a=e.target.closest('[data-a]');if(a)A[a.dataset.a](a)};
+document.addEventListener('click',e=>{const a=e.target.closest('.md [data-a]');if(a&&!app.contains(a))A[a.dataset.a](a)});
+onAuthStateChanged(auth,async u=>{
+  if(!u){S.u=null;return landing()}
+  if(!domainOk(u.email)){await signOut(auth);toast(`Only @${CFG.domain} accounts can sign in`);return landing()}
+  if(!u.emailVerified)return unverified();
+  S.u=u;
+  try{S.admin=(await getDoc(doc(db,'admins',u.email.toLowerCase()))).exists();
+    if(S.admin){S.view='ver';await loadAdmin();ver()}
+    else{const[t,s]=await Promise.all([getDoc(doc(db,'settings','idTemplate')),getDoc(doc(db,'employees',u.uid))]);S.tpl=t.exists()?t.data():{};S.emp=s.exists()?s.data():null;me()}
+  }catch(x){toast('Could not load data: '+x.message)}});
+</script></body></html>
