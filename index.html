@@ -14,7 +14,7 @@ header{background:linear-gradient(90deg,#1f4b30,#2d6446);border-bottom:5px solid
 .live{background:#d9a62b;color:#3a2a00;font-size:12px;font-weight:600;border-radius:14px;padding:3px 12px}nav.sn{background:#fff;border-bottom:1px solid var(--gold);color:var(--ink)}nav.sn .w{display:flex;gap:4px;flex-wrap:wrap;padding-top:4px;padding-bottom:4px}
 .dt{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:10px}.cnt[hidden]{display:none}
 @media(max-width:640px){.ttl{font-size:19px}.tsub{font-size:9px}.tb{gap:10px}}
-.idc .qr{left:36.4%;top:13.7%;width:37.3%;aspect-ratio:1;background:#fff;padding:1.15%;box-sizing:border-box}.idc .t{display:block;line-height:1;font-family:Outfit,Inter,sans-serif}.idc .fit{white-space:nowrap;overflow:hidden}.idc .qr svg{position:static;width:100%;height:100%;display:block}
+.idc .qr{left:36.4%;top:13.7%;width:37.3%;aspect-ratio:1;background:#fff;padding:1.15%;box-sizing:border-box}.idc .t{display:block;line-height:1;white-space:normal;font-family:Outfit,Inter,sans-serif}.idc .fit{white-space:nowrap}.idc .qr svg{position:static;width:100%;height:100%;display:block}
 #pr{display:none}.pr .idc{width:54mm;height:85.6mm;aspect-ratio:auto;border:0;border-radius:0}
 @media print{body>*:not(#pr){display:none!important}body{display:block;background:#fff}#pr{display:block}#pr .cards{display:block;margin:0}#pr *{-webkit-print-color-adjust:exact;print-color-adjust:exact}#pr .idc{margin:0;break-after:page;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}#pr .cards:last-child .idc:last-child{break-after:auto;page-break-after:auto}@page{size:54mm 85.6mm;margin:0}}.bar{display:flex;align-items:center;gap:14px;height:56px}
 .bar b{flex:1;display:flex;gap:10px;align-items:center;font-size:16px}.bar nav{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
@@ -39,7 +39,7 @@ table{width:100%;border-collapse:collapse}th{font-size:12px;color:var(--mut);tex
 .note{background:#fff4d6;color:#5a4300;border:1px solid var(--gold);border-radius:8px;padding:10px 14px;margin-bottom:14px}.lk{color:var(--g);font-weight:600;cursor:pointer;background:none;border:0;font:inherit}
 .md{position:fixed;inset:0;background:#0007;display:grid;place-items:center;padding:16px;overflow:auto;z-index:5}.md .card{max-width:860px;width:100%;max-height:92vh;overflow:auto}
 .cards{display:flex;gap:14px;flex-wrap:wrap}.idc{position:relative;width:280px;aspect-ratio:320/507;container-type:inline-size;background:#fff center/cover;border:1px solid #bbb;border-radius:8px;overflow:hidden;color:#111}
-.idc *{position:absolute}.idc span{white-space:nowrap}.idc .ph{width:51.4%;aspect-ratio:1;border-radius:50%;background:#ddd center/cover;left:31.1%;top:21.3%}.idc .sg{left:39.4%;top:71.8%;width:28.3%;height:19.2%;object-fit:contain}
+.idc *{position:absolute}.idc span{white-space:nowrap}.idc .ph{width:51.4%;aspect-ratio:1;border-radius:50%;background:#ddd center/cover;left:31.1%;top:21.3%}.idc .sg{left:23.6%;top:71.8%;width:60%;height:19.2%;object-fit:contain;mix-blend-mode:multiply;filter:contrast(1.6) saturate(1.4)}
 .card .sub{color:var(--mut);margin:2px 0 14px}.rvc{border:1px solid var(--gold);border-radius:10px;margin:12px 0;overflow:hidden}.rvh{display:flex;justify-content:space-between;padding:10px 12px;font-weight:600}
 .rv{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-top:1px solid var(--line);font-size:14px}.rv span{color:var(--mut)}.rv b{font-weight:500;text-align:right}.miss{color:#b3261e}.ok{color:#0a7a3a}
 footer{background:var(--gd);border-top:3px solid var(--gold);color:#e6f2e8;text-align:center;font:600 12px Inter;padding:18px;text-transform:uppercase}
@@ -124,23 +124,28 @@ function me(){
   ${SEC.map(([t,sb,f])=>`<div class=card style="margin-bottom:16px"><h3 style="margin:0">${t}</h3><p class=sub>${sb}</p><div class=grid style="margin:0">${f.map(x=>fld(x,e,d)).join('')}</div></div>`).join('')}
   <div class=card style="margin-bottom:16px"><h3 style="margin:0">Photo & signature</h3><p class=sub>Upload a formal ID photo and your signature. Files are stored in Google Drive and can be replaced any time before you submit.</p>
   <div class=grid style="margin:0"><div><label>ID photo</label><div class=pv id=pp style="background-image:url(${img(e.photoId)})"></div><input type=file id=ph accept="image/*" ${d}><small style="color:var(--mut)">Square JPEG or PNG, at least 600×600px. White background, formal attire.</small></div>
-  <div><label>Signature</label><div class=pv id=sp style="height:90px;background-image:url(${img(e.signId)})"></div>${lock?'':`<canvas id=pad width=500 height=190></canvas><div class=row style="justify-content:flex-start;margin-top:6px"><button class="btn alt sm" data-a=clr>Clear</button><button class="btn sm" data-a=sigsave>Save signature</button><input type=file id=sf accept="image/*" style="width:auto"></div><small style="color:var(--mut)">Draw above, or upload a JPEG or PNG on a white background.</small>`}</div></div></div>
+  <div><label>Signature</label><div class=pv id=sp style="height:90px;background-image:url(${img(e.signId)})"></div>${lock?'':`<canvas id=pad width=900 height=340></canvas><div class=row style="justify-content:flex-start;margin-top:6px"><button class="btn alt sm" data-a=clr>Clear</button><button class="btn sm" data-a=sigsave>Save signature</button><input type=file id=sf accept="image/*" style="width:auto"></div><small style="color:var(--mut)">Draw above, or upload a JPEG or PNG on a white background.</small>`}</div></div></div>
   <div class=card style="margin-bottom:16px"><h3 style="margin:0">ID preview</h3><p class=sub>This is how your ID will look. It updates as you fill in the form.</p><div id=idp></div></div>
   ${st=='draft'?`<div class=card><button class=btn style="width:100%" data-a=submit>Submit for verification</button><p class=sub style="text-align:center;margin:10px 0 0">Your answers are saved automatically. Submit once every section, including your photo and signature, is complete.</p></div>`:''}
 `);
   S.lp=S.ls=null;prev();
   if(!lock){
     $('#ph').onchange=async x=>{try{toast('Uploading photo…');const u=await b64(x.target.files[0],800,'image/jpeg');$('#pp').style.backgroundImage=`url(${u})`;S.lp=u;prev();await patch({photoId:await up('photo',u)});toast('Photo saved')}catch(z){toast(z.message)}};
-    const c=$('#pad'),g=c.getContext('2d');let on=0;g.lineWidth=3;g.lineCap='round';
+    const c=$('#pad'),g=c.getContext('2d');let on=0;g.lineWidth=6;g.lineCap='round';
     const p=ev=>{const r=c.getBoundingClientRect();return[(ev.clientX-r.left)*c.width/r.width,(ev.clientY-r.top)*c.height/r.height]};
     c.onpointerdown=ev=>{on=1;c.setPointerCapture(ev.pointerId);g.beginPath();g.moveTo(...p(ev))};
     c.onpointermove=ev=>{if(on){g.lineTo(...p(ev));g.stroke();S.sig='pad'}};c.onpointerup=()=>on=0;
     S.clear=()=>{g.clearRect(0,0,c.width,c.height);S.sig=null};
-    $('#sf').onchange=async x=>{const u=await b64(x.target.files[0],600,'image/png');const im=new Image();im.onload=()=>{g.clearRect(0,0,c.width,c.height);const k=Math.min(c.width/im.width,c.height/im.height);g.drawImage(im,0,0,im.width*k,im.height*k);S.sig='pad'};im.src=u}}}
+    $('#sf').onchange=async x=>{const u=await b64(x.target.files[0],1000,'image/png');const im=new Image();im.onload=()=>{g.clearRect(0,0,c.width,c.height);const k=Math.min(c.width/im.width,c.height/im.height);g.drawImage(im,0,0,im.width*k,im.height*k);S.sig='pad'};im.src=u}}}
 let tm;app.addEventListener('input',ev=>{const n=ev.target.name;if(!n||S.view!='me'||(S.emp?.status&&S.emp.status!='draft'))return;
   if(MASK[n])ev.target.value=fmt(ev.target.value,MASK[n]);
   if(['first','mi','last','ext'].includes(n))$('#nm').textContent=idLabel(vals())+' · user';if(n=='ptype')$('#pl').textContent=posL(ev.target.value);$('#sv').textContent='Saving…';prev();clearTimeout(tm);
   tm=setTimeout(async()=>{try{await patch(vals());$('#sv').textContent='All changes saved'}catch(x){$('#sv').textContent='Not saved: '+x.message}},1000)});
+function padData(){ // trims the signature to its ink, removes the white background and darkens thin strokes
+  const c=$('#pad'),g=c.getContext('2d'),im=g.getImageData(0,0,c.width,c.height),d=im.data;let x0=c.width,y0=c.height,x1=0,y1=0;
+  for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++){const i=(y*c.width+x)*4,m=Math.min(d[i],d[i+1],d[i+2]),a=Math.round(d[i+3]*Math.min(1,(255-m)*2.2/255));d[i+3]=a;if(a>25){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}}
+  if(x1<x0)return c.toDataURL('image/png');
+  const u=document.createElement('canvas'),t=document.createElement('canvas'),p=8,w=x1-x0+1+2*p,h=y1-y0+1+2*p;u.width=c.width;u.height=c.height;u.getContext('2d').putImageData(im,0,0);t.width=w;t.height=h;t.getContext('2d').drawImage(u,x0-p,y0-p,w,h,0,0,w,h);return t.toDataURL('image/png')}
 function submit(){
   const d=vals(),e=S.emp||{},hasP=!!e.photoId,hasS=!!e.signId||!!S.sig,miss=F.filter(f=>(!f[4]&&!d[f[0]])||bad(f[0],d[f[0]])).length+(hasP?0:1)+(hasS?0:1);
   const row=([k,l,,,fl])=>`<div class=rv><span>${l}</span><b class="${(!fl&&!d[k])||bad(k,d[k])?'miss':''}">${esc(d[k])||(fl?'—':'Missing')}${bad(k,d[k])?' (incomplete)':''}</b></div>`;
@@ -152,7 +157,7 @@ function submit(){
   <div class=row style="justify-content:flex-end"><button class="btn alt" data-a=close>Edit details</button><button class=btn data-a=confirm ${miss?'disabled':''}>Confirm & submit</button></div></div>`;document.body.append(m)}
 async function confirmSubmit(){
   document.querySelector('.md')?.remove();toast('Submitting…');
-  try{const o=vals();if(S.sig)o.signId=await up('signature',$('#pad').toDataURL('image/png'));
+  try{const o=vals();if(S.sig)o.signId=await up('signature',padData());
     Object.assign(o,{status:'pending',ownerEmail:S.u.email,updatedAt:serverTimestamp(),submittedAt:serverTimestamp(),remarks:''});
     await setDoc(doc(db,'employees',S.u.uid),o,{merge:true});S.emp={...S.emp,...o};toast('Submitted for verification');me()}catch(x){toast('Could not submit: '+x.message)}}
 
@@ -160,7 +165,7 @@ async function confirmSubmit(){
 const P=(t,l,top,x='')=>`<span style="left:${l}%;top:${top}%;${x}">${esc(t)}</span>`;
 const fd=d=>{if(!d)return'';const[y,m,x]=d.split('-');return`${m}/${x}/${y}`};
 const bt=b=>b?`${b.slice(0,-1)} RhD ${b.endsWith('+')?'positive':'negative'} (${b})`:'';
-const fitAll=r=>r.querySelectorAll('.fit').forEach(el=>{el.style.fontSize=el.dataset.fs+'cqw';const k=el.clientWidth/el.scrollWidth;if(k>0&&k<1)el.style.fontSize=(el.dataset.fs*k*.97)+'cqw'});
+const fitAll=(r,m=1)=>r.querySelectorAll('.fit').forEach(el=>{let f=+el.dataset.fs;el.style.fontSize=f+'cqw';for(let i=0;i<6&&el.scrollWidth>el.clientWidth+.5;i++){f*=Math.max(.8,el.clientWidth/el.scrollWidth)*.98;el.style.fontSize=f+'cqw'}if(m<1)el.style.fontSize=f*m+'cqw'});
 document.fonts?.addEventListener('loadingdone',()=>fitAll(document));
 function qrSvg(e){try{if(!(e.tin||e.sss||e.gsis||e.phic||e.pagibig))return'';const q=qrcode(0,'M');q.addData(['CBSUA EMPLOYEE ID',e.empNo||'','TIN: '+(e.tin||'-'),'SSS: '+(e.sss||'-'),'GSIS: '+(e.gsis||'-'),'PhilHealth: '+(e.phic||'-'),'Pag-IBIG: '+(e.pagibig||'-')].join('\n'));q.make();return q.createSvgTag({cellSize:2,margin:0,scalable:true})}catch(x){return''}}
 function idCards(e,pr){
@@ -169,7 +174,7 @@ function idCards(e,pr){
   const W=pr?1200:800,n=[e.first,e.mi,e.last,e.ext&&e.ext!='None'?e.ext:''].filter(Boolean).join(' ').toUpperCase(),q=qrSvg(e);
   const T=(t,l,top,w,fs,x='',fit)=>`<span class="t${fit?' fit':''}" data-fs="${fs}" style="left:${l}%;top:${top}%;width:${w}%;font-size:${fs}cqw;${x}">${esc(t)}</span>`;
   const G='color:#072410;text-align:center;',U='font-weight:700;color:#111;text-decoration:underline;text-decoration-thickness:.25cqw;text-underline-offset:.55cqw;';
-  return`<div class="cards${pr?' pr':''}"><div class=idc style="background-image:url(${img(S.tpl.front,W)})"><i class=ph style="background-image:url(${e._photo||img(e.photoId,W)})"></i>${T(n,18.9,57.29,73.9,8,G+'font-weight:500;line-height:.91')}${T(e.position,13,66.91,86.2,6.4,G+'font-weight:300',1)}${e._sig||e.signId?`<img class=sg src="${e._sig||img(e.signId,W)}">`:''}${T(e.empNo,17.2,88.73,73.9,7.39,G+'font-weight:400',1)}</div>
+  return`<div class="cards${pr?' pr':''}"><div class=idc style="background-image:url(${img(S.tpl.front,W)})"><i class=ph style="background-image:url(${e._photo||img(e.photoId,W)})"></i>${T((e.first||'').toUpperCase(),18.9,57.06,73.9,8,G+'font-weight:500',1)}${T([e.mi,e.last,e.ext&&e.ext!='None'?e.ext:''].filter(Boolean).join(' ').toUpperCase(),18.9,61.64,73.9,8,G+'font-weight:500',1)}${T(e.position,12.6,66.57,87,7,G+'font-weight:300',1)}${e._sig||e.signId?`<img class=sg src="${e._sig||img(e.signId,W)}">`:''}${T(e.empNo,17.2,88.73,73.9,7.39,G+'font-weight:400',1)}</div>
   <div class=idc style="background-image:url(${img(S.tpl.back,W)})">${T(e.address,15.4,5.88,84.4,3.88,U+'line-height:1.34;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden')}${q?`<div class=qr>${q}</div>`:''}${T(fd(e.birth),48.6,38.42,40,5.05,U,1)}${T(bt(e.blood),48.6,43.16,50.5,5.05,U,1)}${T(e.contact,48.6,48.32,40,5.05,U,1)}${T(e.email,18.6,55.97,71,5.05,U,1)}${T(e.eName,21.6,67.54,61.6,5.05,U+'text-align:center;',1)}${T(e.eRel,21.6,70.99,61.6,5.05,U+'text-align:center;',1)}${T(e.eContact,48.6,75.34,45,5.05,U,1)}</div></div>`}
 
 // ---- Admin ----
@@ -219,14 +224,14 @@ async function doPrint(ids){
   await Promise.all(urls.map(u=>new Promise(r=>{const i=new Image();i.onload=i.onerror=r;i.src=u;setTimeout(r,20000)})));
   window.onafterprint=async()=>{window.onafterprint=null;h.innerHTML='';const v=ids.filter(u=>S.rows.find(r=>r.uid==u).status=='verified');
     if(v.length&&confirm(`Mark ${v.length} printed ID(s) as issued?`)){for(const u of v)await setDoc(doc(db,'employees',u),{status:'issued',updatedAt:serverTimestamp()},{merge:true});toast('Marked as issued')}};
-  await document.fonts.load('700 20px Outfit');await document.fonts.load('300 20px Outfit');await document.fonts.ready;h.style.cssText='display:block;position:fixed;left:-99999px;top:0';fitAll(h);h.style.cssText='';await new Promise(r=>setTimeout(r,500));window.print()}
+  await document.fonts.load('700 20px Outfit');await document.fonts.load('300 20px Outfit');await document.fonts.ready;h.style.cssText='display:block;position:fixed;left:-99999px;top:0';fitAll(h,.96);h.style.cssText='';await new Promise(r=>setTimeout(r,500));window.print()}
 // ---- Auth + events ----
 const domainOk=e=>(e||'').toLowerCase().endsWith('@'+CFG.domain);
 const A={
   async google(){try{const p=new GoogleAuthProvider();p.setCustomParameters({hd:CFG.domain,prompt:'select_account'});await signInWithPopup(auth,p)}catch(x){toast(x.message)}},
   out:()=>signOut(auth),reload:async()=>{await auth.currentUser.reload();location.reload()},
   nav(a){S.view=a.dataset.v;S.pg=0;({tpl,prt}[S.view]||ver)()},pall(a){document.querySelectorAll('.pk').forEach(x=>x.checked=a.checked)},print(){doPrint([...document.querySelectorAll('.pk:checked')].map(x=>x.value))},print1:a=>doPrint([a.dataset.u]),ptab(a){S.ptab=a.dataset.t;prt()},tab(a){S.tab=a.dataset.t;S.pg=0;ver()},pg(a){S.pg=(S.pg||0)+ +a.dataset.d;ver()},review:a=>review(a.dataset.u),close:()=>document.querySelector('.md').remove(),
-  set:a=>setStatus(a.dataset.u,a.dataset.s),clr:()=>S.clear(),submit,confirm:confirmSubmit,async sigsave(){if(!S.sig)return toast('Draw or upload your signature first');try{toast('Saving signature…');const du=$('#pad').toDataURL('image/png'),id=await up('signature',du);await patch({signId:id});S.ls=du;S.sig=null;prev();$('#sp').style.backgroundImage=`url(${img(id)})`;S.clear();toast('Signature saved')}catch(x){toast(x.message)}},
+  set:a=>setStatus(a.dataset.u,a.dataset.s),clr:()=>S.clear(),submit,confirm:confirmSubmit,async sigsave(){if(!S.sig)return toast('Draw or upload your signature first');try{toast('Saving signature…');const du=padData(),id=await up('signature',du);await patch({signId:id});S.ls=du;S.sig=null;prev();$('#sp').style.backgroundImage=`url(${img(id)})`;S.clear();toast('Signature saved')}catch(x){toast(x.message)}},
   async editrec(){await setDoc(doc(db,'employees',S.u.uid),{status:'draft',updatedAt:serverTimestamp()},{merge:true});S.emp.status='draft';me()},
   reissue(){const m=document.createElement('div');m.className='md';const o=(v,t)=>`<label style="display:flex;gap:8px;align-items:center;font-size:15px;color:var(--ink)"><input type=radio name=rr value="${v}" style="width:auto" ${v=='Lost ID'?'checked':''}> ${v} <small style="color:var(--mut)">(${t})</small></label>`;
     m.innerHTML=`<div class=card style="max-width:520px"><b style="font-size:18px">Request ID reissue</b><p class=sub>Choose the reason, then upload the required document.</p>${o('Lost ID','upload affidavit of loss')}${o('Re-appointment or new designation','upload appointment letter')}<label style="margin-top:12px" id=rl>Affidavit of loss (image or PDF)</label><input type=file id=rf accept="image/*,application/pdf"><div class=row style="justify-content:flex-end;margin-top:16px"><button class="btn alt" data-a=close>Cancel</button><button class=btn data-a=rsend>Submit request</button></div></div>`;
