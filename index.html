@@ -35,7 +35,7 @@ table{width:100%;border-collapse:collapse}th{font-size:12px;color:var(--mut);tex
 .rv{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-top:1px solid var(--line);font-size:14px}.rv span{color:var(--mut)}.rv b{font-weight:500;text-align:right}.miss{color:#b3261e}.ok{color:#0a7a3a}
 footer{background:var(--gd);border-top:3px solid var(--gold);color:#e6f2e8;text-align:center;font:600 12px Inter;padding:18px;text-transform:uppercase}
 #t{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#14261a;color:#fff;padding:10px 18px;border-radius:8px;display:none;z-index:9}
-</style></head><body><div id="app"></div><footer>© 2026 Office of the Human Resource Management and Development</footer><div id="t"></div>
+</style></head><body><div id="app"></div><footer id="ft">© 2026 Office of the Human Resource Management and Development</footer><div id="t"></div>
 <script type="module">
 // ===== SETUP: paste your values (see README steps) =====
 const CFG={
@@ -47,6 +47,7 @@ import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-ap
 import{getAuth,onAuthStateChanged,signInWithPopup,GoogleAuthProvider,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import{getFirestore,doc,getDoc,setDoc,collection,getDocs,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const fb=initializeApp(CFG.firebase),auth=getAuth(fb),db=getFirestore(fb);
+document.querySelectorAll('footer').forEach((f,i)=>i&&f.remove()); // keep a single footer
 const $=s=>document.querySelector(s),app=$('#app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const img=id=>id?`https://drive.google.com/thumbnail?id=${id}&sz=w800`:'';
@@ -92,6 +93,7 @@ const posL=t=>t=='Teaching'?'Teaching position / rank':'Non-teaching position';
 const fld=([k,l,t,o,fl],e,d)=>{const v=k=='email'?S.u.email:(e[k]??(k=='ext'?'None':'')),dd=d||fl=='x'?'disabled':'',w=t=='ta'||k=='email'?' style="grid-column:1/-1"':'';
   const c=t=='sel'?`<select name=${k} ${dd}>${k=='ext'?'':'<option value="">Select</option>'}${o.map(x=>`<option ${x==v?'selected':''}>${x}</option>`).join('')}</select>`:t=='ta'?`<textarea name=${k} rows=2 ${dd}>${esc(v)}</textarea>`:`<input name=${k} type=${t||'text'} value="${esc(MASK[k]?fmt(v,MASK[k]):v)}" ${MASK[k]?`inputmode=numeric placeholder="${MASK[k].replace(/#/g,'0')}" maxlength=${MASK[k].length}`:''} ${dd}>`;
   return`<div${w}><label${k=='position'?' id=pl':''}>${k=='position'?posL(e.ptype):l}${fl=='o'?' (optional)':''}</label>${c}${k=='email'?'<small style="color:var(--mut)">This is the address you signed in with and can\'t be changed here.</small>':''}</div>`};
+const prev=()=>{const x=$('#idp');if(!x||!S.u)return;try{x.innerHTML=idCards({...(S.emp||{}),...vals(),email:S.u.email,_photo:S.lp,_sig:S.ls})}catch(e){}};
 const vals=()=>Object.fromEntries(F.map(([k])=>[k,app.querySelector(`[name=${k}]`).value.trim()]));
 async function patch(o){S.emp={...(S.emp||{}),...o};await setDoc(doc(db,'employees',S.u.uid),{...o,status:'draft',ownerEmail:S.u.email,updatedAt:serverTimestamp()},{merge:true})}
 function me(){
@@ -103,10 +105,12 @@ function me(){
   <div class=card style="margin-bottom:16px"><h3 style="margin:0">Photo & signature</h3><p class=sub>Upload a formal ID photo and your signature. Files are stored in Google Drive and can be replaced any time before you submit.</p>
   <div class=grid style="margin:0"><div><label>ID photo</label><div class=pv id=pp style="background-image:url(${img(e.photoId)})"></div><input type=file id=ph accept="image/*" ${d}><small style="color:var(--mut)">Square JPEG or PNG, at least 600×600px. White background, formal attire.</small></div>
   <div><label>Signature</label><div class=pv id=sp style="height:90px;background-image:url(${img(e.signId)})"></div>${lock?'':`<canvas id=pad width=500 height=190></canvas><div class=row style="justify-content:flex-start;margin-top:6px"><button class="btn alt sm" data-a=clr>Clear</button><button class="btn sm" data-a=sigsave>Save signature</button><input type=file id=sf accept="image/*" style="width:auto"></div><small style="color:var(--mut)">Draw above, or upload a JPEG or PNG on a white background.</small>`}</div></div></div>
+  <div class=card style="margin-bottom:16px"><h3 style="margin:0">ID preview</h3><p class=sub>This is how your ID will look. It updates as you fill in the form.</p><div id=idp></div></div>
   ${st=='draft'?`<div class=card><button class=btn style="width:100%" data-a=submit>Submit for verification</button><p class=sub style="text-align:center;margin:10px 0 0">Your answers are saved automatically. Submit once every section, including your photo and signature, is complete.</p></div>`:''}
-  ${st=='issued'||st=='verified'?`<h3 style="margin:24px 0 10px">ID preview</h3>${idCards(e)}`:''}`);
+`);
+  S.lp=S.ls=null;prev();
   if(!lock){
-    $('#ph').onchange=async x=>{try{toast('Uploading photo…');const u=await b64(x.target.files[0],800,'image/jpeg');$('#pp').style.backgroundImage=`url(${u})`;await patch({photoId:await up('photo',u)});toast('Photo saved')}catch(z){toast(z.message)}};
+    $('#ph').onchange=async x=>{try{toast('Uploading photo…');const u=await b64(x.target.files[0],800,'image/jpeg');$('#pp').style.backgroundImage=`url(${u})`;S.lp=u;prev();await patch({photoId:await up('photo',u)});toast('Photo saved')}catch(z){toast(z.message)}};
     const c=$('#pad'),g=c.getContext('2d');let on=0;g.lineWidth=3;g.lineCap='round';
     const p=ev=>{const r=c.getBoundingClientRect();return[(ev.clientX-r.left)*c.width/r.width,(ev.clientY-r.top)*c.height/r.height]};
     c.onpointerdown=ev=>{on=1;c.setPointerCapture(ev.pointerId);g.beginPath();g.moveTo(...p(ev))};
@@ -115,7 +119,7 @@ function me(){
     $('#sf').onchange=async x=>{const u=await b64(x.target.files[0],600,'image/png');const im=new Image();im.onload=()=>{g.clearRect(0,0,c.width,c.height);const k=Math.min(c.width/im.width,c.height/im.height);g.drawImage(im,0,0,im.width*k,im.height*k);S.sig='pad'};im.src=u}}}
 let tm;app.addEventListener('input',ev=>{const n=ev.target.name;if(!n||S.view!='me'||(S.emp?.status&&S.emp.status!='draft'))return;
   if(MASK[n])ev.target.value=fmt(ev.target.value,MASK[n]);
-  if(['first','mi','last','ext'].includes(n))$('#nm').textContent=idLabel(vals());if(n=='ptype')$('#pl').textContent=posL(ev.target.value);$('#sv').textContent='Saving…';clearTimeout(tm);
+  if(['first','mi','last','ext'].includes(n))$('#nm').textContent=idLabel(vals());if(n=='ptype')$('#pl').textContent=posL(ev.target.value);$('#sv').textContent='Saving…';prev();clearTimeout(tm);
   tm=setTimeout(async()=>{try{await patch(vals());$('#sv').textContent='All changes saved'}catch(x){$('#sv').textContent='Not saved: '+x.message}},1000)});
 function submit(){
   const d=vals(),e=S.emp||{},hasP=!!e.photoId,hasS=!!e.signId||!!S.sig,miss=F.filter(f=>(!f[4]&&!d[f[0]])||bad(f[0],d[f[0]])).length+(hasP?0:1)+(hasS?0:1);
@@ -136,7 +140,7 @@ async function confirmSubmit(){
 const P=(t,l,top,x='')=>`<span style="left:${l}%;top:${top}%;${x}">${esc(t)}</span>`;
 function idCards(e){
   const n=[e.first,e.mi,e.last,e.ext&&e.ext!='None'?e.ext:''].filter(Boolean).join(' ').toUpperCase(),ct='transform:translateX(-50%);font-weight:700;',emg=e.eName?`${e.eName}`:'';
-  return`<div class=cards><div class=idc style="background-image:url(${img(S.tpl.front)})"><i class=ph style="background-image:url(${img(e.photoId)})"></i>${P(n,50,59.5,ct+'font-size:12px')}${P(e.position,50,68.6,ct+'font-weight:500')}${e.signId?`<img class=sg src="${img(e.signId)}">`:''}${P(e.empNo,50,89,ct+'font-size:12px')}</div>
+  return`<div class=cards><div class=idc style="background-image:url(${img(S.tpl.front)})"><i class=ph style="background-image:url(${e._photo||img(e.photoId)})"></i>${P(n,50,59.5,ct+'font-size:12px')}${P(e.position,50,68.6,ct+'font-weight:500')}${e._sig||e.signId?`<img class=sg src="${e._sig||img(e.signId)}">`:''}${P(e.empNo,50,89,ct+'font-size:12px')}</div>
   <div class=idc style="background-image:url(${img(S.tpl.back)})">${P(e.address,15,8)}${P(e.birth,48,39.8)}${P(e.blood,48,44.4)}${P(e.contact,48,49)}${P(e.email,15,57.4)}${P(emg,15,68.8)}${P(e.eRel,15,72)}${P(e.eContact,48,76.7)}</div></div>`}
 
 // ---- Admin ----
@@ -174,7 +178,7 @@ const A={
   async google(){try{const p=new GoogleAuthProvider();p.setCustomParameters({hd:CFG.domain,prompt:'select_account'});await signInWithPopup(auth,p)}catch(x){toast(x.message)}},
   out:()=>signOut(auth),reload:async()=>{await auth.currentUser.reload();location.reload()},
   nav(a){S.view=a.dataset.v;S.pg=0;S.view=='tpl'?tpl():ver()},tab(a){S.tab=a.dataset.t;S.pg=0;ver()},pg(a){S.pg=(S.pg||0)+ +a.dataset.d;ver()},review:a=>review(a.dataset.u),close:()=>document.querySelector('.md').remove(),
-  set:a=>setStatus(a.dataset.u,a.dataset.s),clr:()=>S.clear(),submit,confirm:confirmSubmit,async sigsave(){if(!S.sig)return toast('Draw or upload your signature first');try{toast('Saving signature…');const id=await up('signature',$('#pad').toDataURL('image/png'));await patch({signId:id});S.sig=null;$('#sp').style.backgroundImage=`url(${img(id)})`;S.clear();toast('Signature saved')}catch(x){toast(x.message)}},
+  set:a=>setStatus(a.dataset.u,a.dataset.s),clr:()=>S.clear(),submit,confirm:confirmSubmit,async sigsave(){if(!S.sig)return toast('Draw or upload your signature first');try{toast('Saving signature…');const du=$('#pad').toDataURL('image/png'),id=await up('signature',du);await patch({signId:id});S.ls=du;S.sig=null;prev();$('#sp').style.backgroundImage=`url(${img(id)})`;S.clear();toast('Signature saved')}catch(x){toast(x.message)}},
   async reissue(){await setDoc(doc(db,'employees',S.u.uid),{reissue:true,updatedAt:serverTimestamp()},{merge:true});S.emp.reissue=true;me()},
   async tdel(a){await setDoc(doc(db,'settings','idTemplate'),{[a.dataset.k]:null},{merge:true});S.tpl[a.dataset.k]=null;tpl()}};
 app.onclick=e=>{const a=e.target.closest('[data-a]');if(a)A[a.dataset.a](a)};
