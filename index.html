@@ -61,7 +61,7 @@ document.querySelectorAll('footer').forEach((f,i)=>i&&f.remove()); // keep a sin
 const $=s=>document.querySelector(s),app=$('#app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const img=(id,w=800)=>id?`https://drive.google.com/thumbnail?id=${id}&sz=w${w}`:'';
-const toast=m=>{const t=$('#t');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3800)};
+const toast=(m,ms=3800)=>{const t=$('#t');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',ms)};
 const S={u:null,admin:false,view:'me',tab:'pending',rows:[],emp:null,tpl:{},photo:null,sig:null};
 const CAMPUS=['Pili','Calabanga','Sipocot','Pasacao'],EMP=['Permanent','Casual','Temporary','Job Order/Contract of Service','Project Based'],BT=['A+','A-','B+','B-','AB+','AB-','O+','O-'];
 const SEC=[
@@ -113,6 +113,7 @@ function me(){
   if(st!='draft'){const T=F.filter(f=>!f[4]).length+2,dn=F.filter(f=>!f[4]&&e[f[0]]).length+!!e.photoId+!!e.signId,
     pr=[...SEC.map(([t,,f])=>[t,f.filter(x=>!x[4]).every(x=>e[x[0]])]),['Photo & signature',!!e.photoId&&!!e.signId]];
     shell(`<div class=hd style="align-items:flex-start"><div><h1>Your employee ID record</h1><p class=sub style="margin:2px 0 0">${esc(fullName(e))}</p></div>${badge(st)}</div>
+    ${st=='pending'||st=='verified'?'<div class=note style="margin-bottom:16px">Check your account here for your ID status. When it says <b>Printed</b>, claim your ID at the HR office.</div>':''}
     <div class=card style="margin-bottom:16px"><h3 style="margin:0">Registration progress</h3><p class=sub>${dn} of ${T} details completed. Fill in every section, then submit your record for verification.</p>
     ${pr.map(([t,ok])=>`<div class=rv style="padding:10px 0"><span style="color:var(--ink)"><i class=dt style="background:${ok?'#10b981':'#d97706'}"></i>${t}</span><b class="${ok?'ok':'miss'}">${ok?'Complete':'Incomplete'}</b></div>`).join('')}
     <p class=sub style="margin:14px 0 8px">${st=='pending'?'Spotted something to fix? You can reopen your record for editing until it\'s verified.':st=='issued'?(e.reissue?`Reissue requested (${esc(e.reissueReason)}). HR will review it.`:'Your ID has been printed. Please claim it from your campus HR office. Lost your ID, new designation, or details changed? Request a reissue.'):'Your record has been verified by HR.'}</p>
@@ -166,7 +167,7 @@ async function confirmSubmit(){
   document.querySelector('.md')?.remove();toast('Submitting…');
   try{const o=vals(),old=S.sig?S.emp?.signId:null;if(S.sig)o.signId=await up('signature',padData());
     Object.assign(o,{status:'pending',ownerEmail:S.u.email,updatedAt:serverTimestamp(),submittedAt:serverTimestamp(),remarks:''});
-    await setDoc(doc(db,'employees',S.u.uid),o,{merge:true});S.emp={...S.emp,...o};drop(old);toast('Submitted for verification');me()}catch(x){toast('Could not submit: '+x.message)}}
+    await setDoc(doc(db,'employees',S.u.uid),o,{merge:true});S.emp={...S.emp,...o};drop(old);toast('Submitted. Please check your account here to see if your ID is printed, then claim it at the HR office.',9000);me()}catch(x){toast('Could not submit: '+x.message)}}
 
 // ---- ID preview ----
 const P=(t,l,top,x='')=>`<span style="left:${l}%;top:${top}%;${x}">${esc(t)}</span>`;
@@ -195,7 +196,7 @@ async function loadAdmin(){
     if(!first){const nw=rows.filter(r=>r.status=='pending'&&(S.rows.find(x=>x.uid==r.uid)||{}).status!='pending');if(nw.length)toast('New submission: '+nw.map(r=>((r.first||'')+' '+(r.last||'')).trim()).join(', '))}
     S.rows=rows;if(first){first=0;res()}else if(S.view=='ver'||S.view=='re')ver();else if(S.view=='prt'){S.sel=[...document.querySelectorAll('.pk:checked')].map(x=>x.value);prt()}else bd()},x=>{toast(x.message);res()})})}
 function watchMe(){unsubMe?.();unsubMe=onSnapshot(doc(db,'employees',S.u.uid),sn=>{const n=sn.exists()?sn.data():null,o=S.emp||{};
-  if(n&&((n.status||'draft')!=(o.status||'draft')||!!n.reissue!=!!o.reissue||(n.remarks||'')!=(o.remarks||''))){if(n.status=='issued'&&o.status!='issued')toast('Your ID has been printed. Please claim it at your campus HR office.');S.emp=n;me()}})}
+  if(n&&((n.status||'draft')!=(o.status||'draft')||!!n.reissue!=!!o.reissue||(n.remarks||'')!=(o.remarks||''))){if(n.status=='issued'&&o.status!='issued')toast('Your ID status is now Printed. Please claim it at your campus HR office.');S.emp=n;me()}})}
 const PG=10;
 function ver(){
   const re=S.view=='re',all=re?S.rows.filter(r=>r.reissue):S.rows.filter(r=>r.status==S.tab),pages=Math.max(1,Math.ceil(all.length/PG));S.pg=Math.min(S.pg||0,pages-1);
@@ -231,9 +232,7 @@ async function doPrint(ids){
   const urls=[...new Set((h.innerHTML.match(/https:\/\/drive\.google\.com\/thumbnail\?[^"')]+/g)||[]).map(u=>u.replace(/&amp;/g,'&')))];
   await Promise.all(urls.map(u=>new Promise(r=>{const i=new Image();i.onload=i.onerror=r;i.src=u;setTimeout(r,20000)})));
   window.onafterprint=async()=>{window.onafterprint=null;h.innerHTML='';const v=ids.filter(u=>S.rows.find(r=>r.uid==u).status=='verified');
-    if(v.length&&confirm(`Mark ${v.length} ID(s) as printed and email the employee(s)?`)){
-      const list=[];for(const u of v){const r=S.rows.find(x=>x.uid==u);await setDoc(doc(db,'employees',u),{status:'issued',printedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});list.push({email:r.ownerEmail||r.email,name:[r.first,r.last].filter(Boolean).join(' '),empNo:r.empNo})}
-      try{const token=await auth.currentUser.getIdToken(),res=await fetch(CFG.driveScript,{method:'POST',body:JSON.stringify({token,action:'notify',list})}),j=await res.json();toast(j.error?'Marked as printed. Email failed: '+j.error:`Marked as printed. ${j.sent} email(s) sent.`)}catch(x){toast('Marked as printed. Email could not be sent.')}}};
+    if(v.length&&confirm(`Mark ${v.length} ID(s) as printed?`)){for(const u of v)await setDoc(doc(db,'employees',u),{status:'issued',printedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});toast('Marked as printed')}};
   await document.fonts.load('700 20px Outfit');await document.fonts.load('300 20px Outfit');await document.fonts.ready;h.style.cssText='display:block;position:fixed;left:-99999px;top:0';fitAll(h,.96);h.style.cssText='';await new Promise(r=>setTimeout(r,500));window.print()}
 // ---- Auth + events ----
 const domainOk=e=>(e||'').toLowerCase().endsWith('@'+CFG.domain);
