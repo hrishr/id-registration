@@ -80,9 +80,9 @@ const LOGO="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAA
 const SEAL=(n=96)=>`<img src="${LOGO}" width=${n} height=${n} alt="CBSUA seal" style="border-radius:50%">`;
 
 // ---- Google Drive upload (photos, e-signatures, ID template only) ----
-async function up(kind,dataUrl){
+async function up(kind,dataUrl,reason){
   const token=await auth.currentUser.getIdToken();
-  const r=await fetch(CFG.driveScript,{method:'POST',body:JSON.stringify({token,kind,mime:dataUrl.slice(5,dataUrl.indexOf(';')),data:dataUrl.split(',')[1]})});
+  const r=await fetch(CFG.driveScript,{method:'POST',body:JSON.stringify({token,kind,reason,mime:dataUrl.slice(5,dataUrl.indexOf(';')),data:dataUrl.split(',')[1]})});
   const j=await r.json();if(j.error)throw Error(j.error);return j.id}
 async function b64(f,max,type){const b=await createImageBitmap(f),k=Math.min(1,max/Math.max(b.width,b.height)),c=document.createElement('canvas');c.width=b.width*k;c.height=b.height*k;const x=c.getContext('2d');if(type=='image/jpeg'){x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height)}x.drawImage(b,0,0,c.width,c.height);return c.toDataURL(type,.88)}
 
@@ -149,7 +149,7 @@ function inkTrim(c){ // removes the white background, darkens thin strokes and c
   const u=document.createElement('canvas'),t=document.createElement('canvas'),p=8,w=x1-x0+1+2*p,h=y1-y0+1+2*p;u.width=c.width;u.height=c.height;u.getContext('2d').putImageData(im,0,0);t.width=w;t.height=h;t.getContext('2d').drawImage(u,x0-p,y0-p,w,h,0,0,w,h);return t.toDataURL('image/png')}
 const padData=()=>inkTrim($('#pad'));
 const trimImg=src=>new Promise(res=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;c.getContext('2d').drawImage(im,0,0);res(inkTrim(c))};im.onerror=()=>res(src);im.src=src});
-async function drop(id){if(!id)return;try{const token=await auth.currentUser.getIdToken();await fetch(CFG.driveScript,{method:'POST',body:JSON.stringify({token,action:'delete',id})})}catch(x){}}
+async function drop(id){if(!id)return;for(let i=0;i<2;i++){try{const token=await auth.currentUser.getIdToken(),r=await fetch(CFG.driveScript,{method:'POST',body:JSON.stringify({token,action:'delete',id})}),j=await r.json();if(j.ok)return;if(i)toast('Old file was not deleted: '+(j.error||'unknown error'))}catch(x){if(i)toast('Old file was not deleted')}}}
 async function dget(id){const token=await auth.currentUser.getIdToken(),r=await fetch(CFG.driveScript,{method:'POST',body:JSON.stringify({token,action:'get',id})}),j=await r.json();if(j.error)throw Error(j.error);return j.data}
 const sigP={};S.sc={};
 const sigLoad=id=>!id?Promise.resolve():(sigP[id]||=(async()=>{try{S.sc[id]=await trimImg(await dget(id))}catch(x){S.sc[id]=null}prev()})());
@@ -247,7 +247,7 @@ const A={
   async rsend(){const f=$('#rf').files[0],r=document.querySelector('[name=rr]:checked').value;if(r=='Update details'){try{await setDoc(doc(db,'employees',S.u.uid),{status:'draft',reissue:true,reissueReason:r,reissueDocId:null,reissueAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});S.emp={...S.emp,status:'draft',reissue:true,reissueReason:r,reissueDocId:null};document.querySelector('.md')?.remove();toast('You can now edit your details');me()}catch(x){toast(x.message)}return}
     if(!f)return toast('Upload the required document');
     try{toast('Uploading…');let du;if(f.type=='application/pdf'){if(f.size>5e6)return toast('PDF must be under 5 MB');du=await new Promise((ok,no)=>{const x=new FileReader();x.onload=()=>ok(x.result);x.onerror=no;x.readAsDataURL(f)})}else du=await b64(f,1600,'image/jpeg');
-      const id=await up('reissue',du),o={reissue:true,reissueReason:r,reissueDocId:id,reissueAt:serverTimestamp(),updatedAt:serverTimestamp()};
+      const id=await up('reissue',du,r),o={reissue:true,reissueReason:r,reissueDocId:id,reissueAt:serverTimestamp(),updatedAt:serverTimestamp()};
       await setDoc(doc(db,'employees',S.u.uid),o,{merge:true});S.emp={...S.emp,reissue:true,reissueReason:r,reissueDocId:id};document.querySelector('.md')?.remove();toast('Reissue request sent');me()}catch(x){toast(x.message)}},
   async tdel(a){await setDoc(doc(db,'settings','idTemplate'),{[a.dataset.k]:null},{merge:true});S.tpl[a.dataset.k]=null;tpl()}};
 app.onclick=e=>{const a=e.target.closest('[data-a]');if(a)A[a.dataset.a](a)};
