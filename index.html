@@ -72,7 +72,7 @@ const F=SEC.flatMap(x=>x[2]);
 const MASK={tin:'###-###-###',sss:'##-#######-#',phic:'##-#########-#',pagibig:'####-####-####',gsis:'###########',contact:'####-###-####',eContact:'####-###-####'};
 const fmt=(v,p)=>{const d=String(v).replace(/\D/g,'');let o='',i=0;for(const c of p){if(i>=d.length)break;if(c=='#')o+=d[i++];else o+=c}return o};
 const bad=(k,v)=>MASK[k]&&v&&v.length!=MASK[k].length;
-const ST={draft:['Draft','#f59e0b'],pending:['Pending verification','#3b82f6'],verified:['Verified','#16a34a'],issued:['Issued','#0d9488'],inactive:['Inactive','#d97706'],revoked:['Revoked','#dc2626']};
+const ST={draft:['Draft','#f59e0b'],pending:['Pending verification','#3b82f6'],verified:['Verified','#16a34a'],issued:['Printed','#0d9488'],inactive:['Inactive','#d97706'],revoked:['Revoked','#dc2626']};
 const fullName=e=>[e.first,e.mi,e.last,e.ext&&e.ext!='None'?e.ext:''].filter(Boolean).join(' ');
 const idLabel=e=>fullName(e)?fullName(e)+' ID':'My employee ID';
 const badge=s=>`<span class=bd style="--c:${ST[s][1]}">${ST[s][0]}</span>`;
@@ -115,7 +115,7 @@ function me(){
     shell(`<div class=hd style="align-items:flex-start"><div><h1>Your employee ID record</h1><p class=sub style="margin:2px 0 0">${esc(fullName(e))}</p></div>${badge(st)}</div>
     <div class=card style="margin-bottom:16px"><h3 style="margin:0">Registration progress</h3><p class=sub>${dn} of ${T} details completed. Fill in every section, then submit your record for verification.</p>
     ${pr.map(([t,ok])=>`<div class=rv style="padding:10px 0"><span style="color:var(--ink)"><i class=dt style="background:${ok?'#10b981':'#d97706'}"></i>${t}</span><b class="${ok?'ok':'miss'}">${ok?'Complete':'Incomplete'}</b></div>`).join('')}
-    <p class=sub style="margin:14px 0 8px">${st=='pending'?'Spotted something to fix? You can reopen your record for editing until it\'s verified.':st=='issued'?(e.reissue?`Reissue requested (${esc(e.reissueReason)}). HR will review it.`:'Lost your ID, new designation, or details changed? Request a reissue.'):'Your record has been verified by HR.'}</p>
+    <p class=sub style="margin:14px 0 8px">${st=='pending'?'Spotted something to fix? You can reopen your record for editing until it\'s verified.':st=='issued'?(e.reissue?`Reissue requested (${esc(e.reissueReason)}). HR will review it.`:'Your ID has been printed. Please claim it from your campus HR office. Lost your ID, new designation, or details changed? Request a reissue.'):'Your record has been verified by HR.'}</p>
     ${st=='pending'?'<button class="btn alt" data-a=editrec>Edit your submitted record</button>':st=='issued'&&!e.reissue?'<button class=btn data-a=reissue>Request ID reissue</button>':''}</div>
     <div class=card><h3 style="margin:0">ID preview</h3><p class=sub>A preview of how your ID will look. For reference only — your official ID is issued by your campus HR office.</p><div id=idp></div></div>`);
     S.lp=S.ls=null;prev();return}
@@ -195,12 +195,12 @@ async function loadAdmin(){
     if(!first){const nw=rows.filter(r=>r.status=='pending'&&(S.rows.find(x=>x.uid==r.uid)||{}).status!='pending');if(nw.length)toast('New submission: '+nw.map(r=>((r.first||'')+' '+(r.last||'')).trim()).join(', '))}
     S.rows=rows;if(first){first=0;res()}else if(S.view=='ver'||S.view=='re')ver();else if(S.view=='prt'){S.sel=[...document.querySelectorAll('.pk:checked')].map(x=>x.value);prt()}else bd()},x=>{toast(x.message);res()})})}
 function watchMe(){unsubMe?.();unsubMe=onSnapshot(doc(db,'employees',S.u.uid),sn=>{const n=sn.exists()?sn.data():null,o=S.emp||{};
-  if(n&&((n.status||'draft')!=(o.status||'draft')||!!n.reissue!=!!o.reissue||(n.remarks||'')!=(o.remarks||''))){S.emp=n;me()}})}
+  if(n&&((n.status||'draft')!=(o.status||'draft')||!!n.reissue!=!!o.reissue||(n.remarks||'')!=(o.remarks||''))){if(n.status=='issued'&&o.status!='issued')toast('Your ID has been printed. Please claim it at your campus HR office.');S.emp=n;me()}})}
 const PG=10;
 function ver(){
   const re=S.view=='re',all=re?S.rows.filter(r=>r.reissue):S.rows.filter(r=>r.status==S.tab),pages=Math.max(1,Math.ceil(all.length/PG));S.pg=Math.min(S.pg||0,pages-1);
   const rows=all.slice(S.pg*PG,S.pg*PG+PG),from=all.length?S.pg*PG+1:0,to=S.pg*PG+rows.length;
-  shell(`<h1>${re?'Reissue requests':'Employee verification'}</h1><p class=sub>${re?'Issued IDs that employees asked to replace.':'Review submitted employee records and manage the verification workflow.'}</p>
+  shell(`<h1>${re?'Reissue requests':'Employee verification'}</h1><p class=sub>${re?'Printed IDs that employees asked to replace.':'Review submitted employee records and manage the verification workflow.'}</p>
   ${re?'':`<div class=pills>${Object.keys(ST).map(k=>`<button class="pill ${S.tab==k?'on':''}" data-a=tab data-t=${k}>${ST[k][0]}${S.rows.filter(r=>r.status==k).length?`<i>${S.rows.filter(r=>r.status==k).length}</i>`:''}</button>`).join('')}</div>`}
   ${rows.length?`<div class="card tw"><table><tr><th>EMPLOYEE NO.<th>NAME<th>CAMPUS<th>${re?'REASON':'EMPLOYMENT'}<th>SUBMITTED<th>STATUS<th style="text-align:right">ACTION</tr>${rows.map(r=>`<tr><td><b>${esc(r.empNo)}</b><td>${esc(r.last)}, ${esc(r.first)}<td>${esc(r.campus)}<td>${esc(re?r.reissueReason:r.employment)}<td>${sdate(r)}<td>${badge(r.status)}<td style="text-align:right"><button class=lk data-a=review data-u=${r.uid}>Review</button></tr>`).join('')}</table></div>`
   :`<div class=card style="text-align:center;color:var(--mut);padding:36px 20px">${re?'No reissue requests.':`No records with status “${ST[S.tab][0]}”.`}</div>`}
@@ -208,7 +208,7 @@ function ver(){
 async function review(uid){
   const r=S.rows.find(x=>x.uid==uid),b=(s,l,c='')=>`<button class="btn sm ${c}" data-a=set data-u=${uid} data-s=${s}>${l}</button>`;
   await sigLoad(r.signId);
-  const acts={pending:b('verified','Verify')+b('draft','Return to employee','alt'),verified:b('issued','Mark as issued')+b('inactive','Set inactive','alt'),issued:(r.reissue?b('verified','Approve reissue'):'')+b('inactive','Set inactive','alt')+b('revoked','Revoke','red'),inactive:b('verified','Reactivate'),revoked:b('verified','Reinstate','alt')}[r.status]||'';
+  const acts={pending:b('verified','Verify')+b('draft','Return to employee','alt'),verified:b('issued','Mark as printed')+b('inactive','Set inactive','alt'),issued:(r.reissue?b('verified','Approve reissue'):'')+b('inactive','Set inactive','alt')+b('revoked','Revoke','red'),inactive:b('verified','Reactivate'),revoked:b('verified','Reinstate','alt')}[r.status]||'';
   const m=document.createElement('div');m.className='md';m.innerHTML=`<div class=card><div class=hd><b>${esc(r.first)} ${esc(r.last)} · ${esc(r.empNo)}</b>${badge(r.status)}</div>${r.reissue?`<div class=note>Reissue request: <b>${esc(r.reissueReason)}</b>${r.reissueDocId?` · <a href="https://drive.google.com/file/d/${r.reissueDocId}/view" target=_blank rel=noopener>View document</a>`:''}</div>`:''}
   <div class=grid>${F.map(([k,l])=>`<div><label>${l}</label>${esc(r[k])||'—'}</div>`).join('')}</div>${idCards(r)}
   <div class=row style="justify-content:flex-start;margin-top:16px">${acts}<button class="btn alt sm" data-a=close>Close</button></div></div>`;document.body.append(m);fitAll(m)}
@@ -231,7 +231,9 @@ async function doPrint(ids){
   const urls=[...new Set((h.innerHTML.match(/https:\/\/drive\.google\.com\/thumbnail\?[^"')]+/g)||[]).map(u=>u.replace(/&amp;/g,'&')))];
   await Promise.all(urls.map(u=>new Promise(r=>{const i=new Image();i.onload=i.onerror=r;i.src=u;setTimeout(r,20000)})));
   window.onafterprint=async()=>{window.onafterprint=null;h.innerHTML='';const v=ids.filter(u=>S.rows.find(r=>r.uid==u).status=='verified');
-    if(v.length&&confirm(`Mark ${v.length} printed ID(s) as issued?`)){for(const u of v)await setDoc(doc(db,'employees',u),{status:'issued',updatedAt:serverTimestamp()},{merge:true});toast('Marked as issued')}};
+    if(v.length&&confirm(`Mark ${v.length} ID(s) as printed and email the employee(s)?`)){
+      const list=[];for(const u of v){const r=S.rows.find(x=>x.uid==u);await setDoc(doc(db,'employees',u),{status:'issued',printedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});list.push({email:r.ownerEmail||r.email,name:[r.first,r.last].filter(Boolean).join(' '),empNo:r.empNo})}
+      try{const token=await auth.currentUser.getIdToken(),res=await fetch(CFG.driveScript,{method:'POST',body:JSON.stringify({token,action:'notify',list})}),j=await res.json();toast(j.error?'Marked as printed. Email failed: '+j.error:`Marked as printed. ${j.sent} email(s) sent.`)}catch(x){toast('Marked as printed. Email could not be sent.')}}};
   await document.fonts.load('700 20px Outfit');await document.fonts.load('300 20px Outfit');await document.fonts.ready;h.style.cssText='display:block;position:fixed;left:-99999px;top:0';fitAll(h,.96);h.style.cssText='';await new Promise(r=>setTimeout(r,500));window.print()}
 // ---- Auth + events ----
 const domainOk=e=>(e||'').toLowerCase().endsWith('@'+CFG.domain);
