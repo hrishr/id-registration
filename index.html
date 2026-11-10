@@ -207,7 +207,11 @@ async function loadAdmin(){
     if(!first){const nw=rows.filter(r=>r.status=='pending'&&(S.rows.find(x=>x.uid==r.uid)||{}).status!='pending');if(nw.length)toast('New submission: '+nw.map(r=>((r.first||'')+' '+(r.last||'')).trim()).join(', '))}
     S.rows=rows;if(first){first=0;unsub2?.();unsub2=onSnapshot(collection(db,'reissues'),q=>{S.reis=q.docs.map(d=>({id:d.id,...d.data()}));if(S.view=='re')reis();else if(S.view=='prt'){S.sel=[...document.querySelectorAll('.pk:checked')].map(x=>x.value);prt()}else bd()},()=>{});res()}else if(S.view=='re')reis();else if(S.view=='ver')ver();else if(S.view=='prt'){S.sel=[...document.querySelectorAll('.pk:checked')].map(x=>x.value);prt()}else bd()},x=>{toast(x.message);res()})})}
 function watchMe(){unsubMe?.();unsubMe=onSnapshot(doc(db,'employees',S.u.uid),sn=>{const n=sn.exists()?sn.data():null,o=S.emp||{};
-  if(n&&((n.status||'draft')!=(o.status||'draft')||!!n.reissue!=!!o.reissue||(n.remarks||'')!=(o.remarks||''))){const pr=n.status=='issued'&&o.status!='issued';S.emp=n;me();if(pr)popup('Your ID is printed','Please claim it at your campus HR office.')}})}
+  if(n&&((n.status||'draft')!=(o.status||'draft')||!!n.reissue!=!!o.reissue||(n.remarks||'')!=(o.remarks||'')||(n.printedAt?.seconds||0)!=(o.printedAt?.seconds||0))){S.emp=n;me();noticePrinted()}})}
+function noticePrinted(){ // shows the 'ID is printed' popup once per print, on sign-in or live
+  const e=S.emp;if(!e||e.status!='issued'||S.admin)return;const k='idseen:'+S.u.uid,v=String(e.printedAt?.seconds||0);
+  try{if(localStorage.getItem(k)===v)return;localStorage.setItem(k,v)}catch(x){}
+  popup('Your ID is printed','Please claim it at your campus HR office.')}
 const PG=10;
 function ver(){
   const re=S.view=='re',all=re?S.rows.filter(r=>r.reissue):S.rows.filter(r=>r.status==S.tab),pages=Math.max(1,Math.ceil(all.length/PG));S.pg=Math.min(S.pg||0,pages-1);
@@ -261,7 +265,7 @@ async function doPrint(ids){
     if(rp.length){const why=await askReprint(rp.length);if(why){for(const u of rp){const r=S.rows.find(x=>x.uid==u);
       if(r.reissueId)await setDoc(doc(db,'reissues',r.reissueId),{status:'printed',printedAt:serverTimestamp()},{merge:true});
       else await addDoc(collection(db,'reissues'),{uid:u,ownerEmail:r.ownerEmail||r.email||'',empNo:r.empNo||'',name:fullName(r),campus:r.campus||'',reason:why,docId:null,requestedAt:serverTimestamp(),printedAt:serverTimestamp(),status:'printed',source:'HR reprint'});
-      await setDoc(doc(db,'employees',u),{reissue:false,reissueId:null,updatedAt:serverTimestamp()},{merge:true})}toast('Reissue recorded')}}};
+      await setDoc(doc(db,'employees',u),{reissue:false,reissueId:null,printedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true})}toast('Reissue recorded')}}};
   await document.fonts.load('700 20px Outfit');await document.fonts.load('300 20px Outfit');await document.fonts.ready;h.style.cssText='display:block;position:fixed;left:-99999px;top:0';fitAll(h,.96);h.style.cssText='';await new Promise(r=>setTimeout(r,500));window.print()}
 // ---- Auth + events ----
 const domainOk=e=>(e||'').toLowerCase().endsWith('@'+CFG.domain);
@@ -289,6 +293,6 @@ onAuthStateChanged(auth,async u=>{
   S.u=u;
   try{S.admin=(await getDoc(doc(db,'admins',u.email.toLowerCase()))).exists();
     if(S.admin){S.view='ver';await loadAdmin();ver()}
-    else{const[t,s]=await Promise.all([getDoc(doc(db,'settings','idTemplate')),getDoc(doc(db,'employees',u.uid))]);S.tpl=t.exists()?t.data():{};S.emp=s.exists()?s.data():null;me();watchMe()}
+    else{const[t,s]=await Promise.all([getDoc(doc(db,'settings','idTemplate')),getDoc(doc(db,'employees',u.uid))]);S.tpl=t.exists()?t.data():{};S.emp=s.exists()?s.data():null;me();watchMe();noticePrinted()}
   }catch(x){toast('Could not load data: '+x.message)}});
 </script></body></html>
