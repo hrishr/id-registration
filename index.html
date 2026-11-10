@@ -56,14 +56,14 @@ const CFG={
 };
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import{getAuth,onAuthStateChanged,signInWithPopup,GoogleAuthProvider,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import{getFirestore,doc,getDoc,setDoc,collection,getDocs,onSnapshot,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import{getFirestore,doc,getDoc,setDoc,collection,getDocs,addDoc,onSnapshot,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const fb=initializeApp(CFG.firebase),auth=getAuth(fb),db=getFirestore(fb);
 document.querySelectorAll('footer').forEach((f,i)=>i&&f.remove()); // keep a single footer
 const $=s=>document.querySelector(s),app=$('#app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const img=(id,w=800)=>id?`https://drive.google.com/thumbnail?id=${id}&sz=w${w}`:'';
 const toast=(m,ms=3800)=>{const t=$('#t');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',ms)};
-const S={u:null,admin:false,view:'me',tab:'pending',rows:[],emp:null,tpl:{},photo:null,sig:null};
+const S={reis:[],u:null,admin:false,view:'me',tab:'pending',rows:[],emp:null,tpl:{},photo:null,sig:null};
 const CAMPUS=['Pili','Calabanga','Sipocot','Pasacao'],EMP=['Permanent','Casual','Temporary','Job Order/Contract of Service','Project Based'],BT=['A+','A-','B+','B-','AB+','AB-','O+','O-'];
 const SEC=[
 ['Personal Details','Your official name, appointment details, and how to reach you.',[['email','Institutional email','email','','x'],['empNo','Employee number'],['ext','Name extension','sel',['None','Jr.','Sr.','II','III','IV'],'o'],['first','First name'],['last','Last name'],['middle','Middle name','','','o'],['mi','Middle initial','','','o'],['campus','Campus','sel',CAMPUS],['employment','Employment type','sel',EMP],['ptype','Position type','sel',['Teaching','Non-Teaching']],['position','Position'],['birth','Date of birth','date'],['blood','Blood type','sel',BT],['contact','Contact number','tel'],['address','Address','ta']]],
@@ -89,7 +89,7 @@ async function b64(f,max,type){const b=await createImageBitmap(f),k=Math.min(1,m
 
 // ---- Layout ----
 function shell(inner){
-  const n=S.rows.filter(r=>r.status=='pending').length,m=S.rows.filter(r=>r.reissue).length,pc=S.rows.filter(r=>r.status=='verified').length,v=S.view,a=x=>v==x?'on':'';
+  const n=S.rows.filter(r=>r.status=='pending').length,m=reqCount(),pc=S.rows.filter(r=>r.status=='verified').length,v=S.view,a=x=>v==x?'on':'';
   const who=S.admin?esc(S.u.displayName||S.u.email)+' · admin':esc(idLabel(S.emp||{}))+' · user';
   app.innerHTML=`<header><div class="w tb">${SEAL(66)}<div><div class=ttl>Employee ID Registration</div><div class=tsub>Office of the Human Resource Management and Development</div></div><div class=tr><span id=nm>${who}</span><button class="btn lo sm" data-a=out>Log out</button></div></div>
   ${S.admin?`<nav class=sn><div class=w><a data-a=nav data-v=ver class="${a('ver')}">Verification <span class=cnt id=c1 ${n?'':'hidden'}>${n}</span></a><a data-a=nav data-v=re class="${a('re')}">Reissue requests <span class=cnt id=c2 ${m?'':'hidden'}>${m}</span></a><a data-a=nav data-v=tpl class="${a('tpl')}">ID template</a><a data-a=nav data-v=prt class="${a('prt')}">ID printing <span class=cnt id=c3 ${pc?'':'hidden'}>${pc}</span></a></div></nav>`:''}</header><main class=dk><div class=w>${inner}</div></main>`}
@@ -152,6 +152,7 @@ const padData=()=>inkTrim($('#pad'));
 const trimImg=src=>new Promise(res=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;c.getContext('2d').drawImage(im,0,0);res(inkTrim(c))};im.onerror=()=>res(src);im.src=src});
 async function drop(id){if(!id)return;for(let i=0;i<2;i++){try{const token=await auth.currentUser.getIdToken(),r=await fetch(CFG.driveScript,{method:'POST',body:JSON.stringify({token,action:'delete',id})}),j=await r.json();if(j.ok)return;if(i)toast('Old file was not deleted: '+(j.error||'unknown error'))}catch(x){if(i)toast('Old file was not deleted')}}}
 function popup(t,m){const x=document.createElement('div');x.className='md';x.innerHTML=`<div class=card style="max-width:440px;text-align:center"><div style="font-size:34px;color:#10b981">✓</div><b style="font-size:18px">${esc(t)}</b><p class=sub style="margin:10px 0 18px">${esc(m)}</p><button class=btn data-a=close>OK</button></div>`;document.body.append(x)}
+async function newReissue(reason,docId){const e=S.emp||{},ref=await addDoc(collection(db,'reissues'),{uid:S.u.uid,ownerEmail:S.u.email,empNo:e.empNo||'',name:fullName(e),campus:e.campus||'',reason,docId,requestedAt:serverTimestamp(),status:'requested'});return ref.id}
 async function dget(id){const token=await auth.currentUser.getIdToken(),r=await fetch(CFG.driveScript,{method:'POST',body:JSON.stringify({token,action:'get',id})}),j=await r.json();if(j.error)throw Error(j.error);return j.data}
 const sigP={};S.sc={};
 const sigLoad=id=>!id?Promise.resolve():(sigP[id]||=(async()=>{try{S.sc[id]=await trimImg(await dget(id))}catch(x){S.sc[id]=null}prev()})());
@@ -189,14 +190,15 @@ function idCards(e,pr){
 
 // ---- Admin ----
 const sdate=r=>r.submittedAt?.toDate?r.submittedAt.toDate().toISOString().slice(0,10):'—';
-let unsub,unsubMe;
-const bd=()=>{const n=S.rows.filter(r=>r.status=='pending').length,m=S.rows.filter(r=>r.reissue).length;if($('#c1')){$('#c1').textContent=n;$('#c1').hidden=!n;$('#c2').textContent=m;$('#c2').hidden=!m;const p=S.rows.filter(r=>r.status=='verified').length;$('#c3').textContent=p;$('#c3').hidden=!p}};
+let unsub,unsub2,unsubMe;
+const reqCount=()=>S.reis.filter(x=>x.status=='requested').length+S.rows.filter(r=>r.reissue&&!r.reissueId).length;
+const bd=()=>{const n=S.rows.filter(r=>r.status=='pending').length,m=reqCount();if($('#c1')){$('#c1').textContent=n;$('#c1').hidden=!n;$('#c2').textContent=m;$('#c2').hidden=!m;const p=S.rows.filter(r=>r.status=='verified').length;$('#c3').textContent=p;$('#c3').hidden=!p}};
 async function loadAdmin(){
   const t=await getDoc(doc(db,'settings','idTemplate'));S.tpl=t.exists()?t.data():{};
   await new Promise(res=>{let first=1;unsub?.();unsub=onSnapshot(collection(db,'employees'),sn=>{
     const rows=sn.docs.map(d=>({uid:d.id,...d.data()}));
     if(!first){const nw=rows.filter(r=>r.status=='pending'&&(S.rows.find(x=>x.uid==r.uid)||{}).status!='pending');if(nw.length)toast('New submission: '+nw.map(r=>((r.first||'')+' '+(r.last||'')).trim()).join(', '))}
-    S.rows=rows;if(first){first=0;res()}else if(S.view=='ver'||S.view=='re')ver();else if(S.view=='prt'){S.sel=[...document.querySelectorAll('.pk:checked')].map(x=>x.value);prt()}else bd()},x=>{toast(x.message);res()})})}
+    S.rows=rows;if(first){first=0;unsub2?.();unsub2=onSnapshot(collection(db,'reissues'),q=>{S.reis=q.docs.map(d=>({id:d.id,...d.data()}));if(S.view=='re')reis();else bd()},()=>{});res()}else if(S.view=='re')reis();else if(S.view=='ver')ver();else if(S.view=='prt'){S.sel=[...document.querySelectorAll('.pk:checked')].map(x=>x.value);prt()}else bd()},x=>{toast(x.message);res()})})}
 function watchMe(){unsubMe?.();unsubMe=onSnapshot(doc(db,'employees',S.u.uid),sn=>{const n=sn.exists()?sn.data():null,o=S.emp||{};
   if(n&&((n.status||'draft')!=(o.status||'draft')||!!n.reissue!=!!o.reissue||(n.remarks||'')!=(o.remarks||''))){const pr=n.status=='issued'&&o.status!='issued';S.emp=n;me();if(pr)popup('Your ID is printed','Please claim it at your campus HR office.')}})}
 const PG=10;
@@ -217,6 +219,7 @@ async function review(uid){
   <div class=row style="justify-content:flex-start;margin-top:16px">${acts}<button class="btn alt sm" data-a=close>Close</button></div></div>`;document.body.append(m);fitAll(m)}
 async function setStatus(uid,s){
   let remarks='';if(s=='draft'){remarks=prompt('Tell the employee what to fix:');if(!remarks)return}
+  const r0=S.rows.find(r=>r.uid==uid);if(s=='verified'&&r0?.reissueId)await setDoc(doc(db,'reissues',r0.reissueId),{status:'approved',approvedAt:serverTimestamp()},{merge:true});
   const x={status:s,remarks,updatedAt:serverTimestamp()};if(s=='verified')x.reissue=false;
   await setDoc(doc(db,'employees',uid),x,{merge:true});Object.assign(S.rows.find(r=>r.uid==uid),x);document.querySelector('.md')?.remove();toast(s=='verified'?'Verified. Ready to print.':'Status updated');if(s=='verified'){S.view='prt';S.ptab='verified';prt()}else ver()}
 function tpl(){
@@ -224,6 +227,14 @@ function tpl(){
   shell(`<h1>ID card template</h1><p class=sub>One university-wide two-sided design. Employee details are placed on top of it in previews.</p><div class=grid>${box('front','Front')}${box('back','Back')}</div>`);
   app.querySelectorAll('input[type=file]').forEach(i=>i.onchange=async()=>{toast('Uploading…');try{const old=S.tpl[i.dataset.k],id=await up('template',await b64(i.files[0],1200,'image/jpeg'));S.tpl[i.dataset.k]=id;await setDoc(doc(db,'settings','idTemplate'),{[i.dataset.k]:id,updatedAt:serverTimestamp()},{merge:true});drop(old);toast('Template updated');tpl()}catch(x){toast(x.message)}})}
 
+const td=t=>t?.toDate?t.toDate().toISOString().slice(0,10):'—';
+function reis(){
+  const leg=S.rows.filter(r=>r.reissue&&!r.reissueId).map(r=>({uid:r.uid,empNo:r.empNo,name:fullName(r),campus:r.campus,reason:r.reissueReason,docId:r.reissueDocId,status:'requested',requestedAt:r.reissueAt})),
+  all=[...S.reis,...leg].sort((a,b)=>(b.requestedAt?.seconds||0)-(a.requestedAt?.seconds||0)),T={requested:'Requested',approved:'Approved (to print)',printed:'Printed'};
+  S.rtab=S.rtab||'requested';const rows=all.filter(x=>x.status==S.rtab),n=k=>all.filter(x=>x.status==k).length;
+  shell(`<h1>Reissue requests</h1><p class=sub>Track ID reissue requests, and which reissued IDs have been printed.</p>
+  <div class=pills>${Object.keys(T).map(k=>`<button class="pill ${S.rtab==k?'on':''}" data-a=rtab data-t=${k}>${T[k]}${n(k)?`<i>${n(k)}</i>`:''}</button>`).join('')}</div>
+  ${rows.length?`<div class="card tw"><table><tr><th>EMPLOYEE NO.<th>NAME<th>CAMPUS<th>REASON<th>REQUESTED<th>PRINTED<th>REISSUES<th style="text-align:right">ACTION</tr>${rows.map(x=>`<tr><td><b>${esc(x.empNo)}</b><td>${esc(x.name)}<td>${esc(x.campus)}<td>${esc(x.reason)}<td>${td(x.requestedAt)}<td>${td(x.printedAt)}<td>${all.filter(y=>y.uid==x.uid).length}<td style="text-align:right">${x.docId?`<a href="https://drive.google.com/file/d/${x.docId}/view" target=_blank rel=noopener>Document</a> · `:''}<button class=lk data-a=review data-u=${x.uid}>Review</button></tr>`).join('')}</table></div>`:`<div class=card style="text-align:center;color:var(--mut);padding:36px 20px">No ${T[S.rtab].toLowerCase()} reissues yet.</div>`}`)}
 function prt(){
   S.ptab=S.ptab||'verified';const rd=S.rows.filter(r=>r.status=='verified'),pd=S.rows.filter(r=>r.status=='issued'),rows=S.ptab=='verified'?rd:pd;
   shell(`<h1>ID printing</h1><p class=sub>Verified IDs are ready to print. Printing sends the front and back to your card printer at 54 × 85.6 mm (CR80). In the print window, turn on two-sided printing so both sides land on one card.</p>
@@ -234,29 +245,29 @@ async function doPrint(ids){
   const urls=[...new Set((h.innerHTML.match(/https:\/\/drive\.google\.com\/thumbnail\?[^"')]+/g)||[]).map(u=>u.replace(/&amp;/g,'&')))];
   await Promise.all(urls.map(u=>new Promise(r=>{const i=new Image();i.onload=i.onerror=r;i.src=u;setTimeout(r,20000)})));
   window.onafterprint=async()=>{window.onafterprint=null;h.innerHTML='';const v=ids.filter(u=>S.rows.find(r=>r.uid==u).status=='verified');
-    if(v.length&&confirm(`Mark ${v.length} ID(s) as printed?`)){for(const u of v)await setDoc(doc(db,'employees',u),{status:'issued',printedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});toast('Marked as printed')}};
+    if(v.length&&confirm(`Mark ${v.length} ID(s) as printed?`)){for(const u of v){const r=S.rows.find(x=>x.uid==u);await setDoc(doc(db,'employees',u),{status:'issued',printedAt:serverTimestamp(),updatedAt:serverTimestamp(),...(r.reissueId?{reissueId:null}:{})},{merge:true});if(r.reissueId)await setDoc(doc(db,'reissues',r.reissueId),{status:'printed',printedAt:serverTimestamp()},{merge:true})}toast('Marked as printed')}};
   await document.fonts.load('700 20px Outfit');await document.fonts.load('300 20px Outfit');await document.fonts.ready;h.style.cssText='display:block;position:fixed;left:-99999px;top:0';fitAll(h,.96);h.style.cssText='';await new Promise(r=>setTimeout(r,500));window.print()}
 // ---- Auth + events ----
 const domainOk=e=>(e||'').toLowerCase().endsWith('@'+CFG.domain);
 const A={
   async google(){try{const p=new GoogleAuthProvider();p.setCustomParameters({hd:CFG.domain,prompt:'select_account'});await signInWithPopup(auth,p)}catch(x){toast(x.message)}},
   out:()=>signOut(auth),reload:async()=>{await auth.currentUser.reload();location.reload()},
-  nav(a){S.view=a.dataset.v;S.pg=0;({tpl,prt}[S.view]||ver)()},pall(a){document.querySelectorAll('.pk').forEach(x=>x.checked=a.checked)},print(){doPrint([...document.querySelectorAll('.pk:checked')].map(x=>x.value))},print1:a=>doPrint([a.dataset.u]),ptab(a){S.ptab=a.dataset.t;prt()},tab(a){S.tab=a.dataset.t;S.pg=0;ver()},pg(a){S.pg=(S.pg||0)+ +a.dataset.d;ver()},review:a=>review(a.dataset.u),close:()=>document.querySelector('.md').remove(),
+  nav(a){S.view=a.dataset.v;S.pg=0;({tpl,prt,re:reis}[S.view]||ver)()},pall(a){document.querySelectorAll('.pk').forEach(x=>x.checked=a.checked)},print(){doPrint([...document.querySelectorAll('.pk:checked')].map(x=>x.value))},print1:a=>doPrint([a.dataset.u]),ptab(a){S.ptab=a.dataset.t;prt()},rtab(a){S.rtab=a.dataset.t;reis()},tab(a){S.tab=a.dataset.t;S.pg=0;ver()},pg(a){S.pg=(S.pg||0)+ +a.dataset.d;ver()},review:a=>review(a.dataset.u),close:()=>document.querySelector('.md').remove(),
   set:a=>setStatus(a.dataset.u,a.dataset.s),clr:()=>S.clear(),sigrep(){$('#sw').hidden=false;$('#rb').hidden=true;$('#sh').hidden=!!S.sig},sigcancel(){$('#sw').hidden=true;$('#rb').hidden=false;S.clear()},submit,confirm:confirmSubmit,async sigsave(){if(!S.sig)return toast('Draw or upload your signature first');try{toast('Saving signature…');const du=padData(),old=S.emp?.signId,id=await up('signature',du);await patch({signId:id});drop(old);S.ls=du;S.sig=null;prev();$('#sp').style.backgroundImage=`url(${du})`;$('#sp').style.display='block';S.clear();$('#sw').hidden=true;$('#rb').hidden=false;$('#sc').hidden=false;toast('Signature saved')}catch(x){toast(x.message)}},
   async editrec(){await setDoc(doc(db,'employees',S.u.uid),{status:'draft',updatedAt:serverTimestamp()},{merge:true});S.emp.status='draft';me()},
   reissue(){const m=document.createElement('div');m.className='md';const o=(v,t)=>`<label style="display:flex;gap:8px;align-items:center;font-size:15px;color:var(--ink)"><input type=radio name=rr value="${v}" style="width:auto" ${v=='Lost ID'?'checked':''}> ${v} <small style="color:var(--mut)">(${t})</small></label>`;
     m.innerHTML=`<div class=card style="max-width:520px"><b style="font-size:18px">Request ID reissue</b><p class=sub>Choose the reason, then upload the required document.</p>${o('Lost ID','upload affidavit of loss')}${o('Re-appointment or new designation','upload appointment letter')}${o('Update details','edit your record, then HR verifies it again')}<label style="margin-top:12px" id=rl>Affidavit of loss (image or PDF)</label><input type=file id=rf accept="image/*,application/pdf"><div class=row style="justify-content:flex-end;margin-top:16px"><button class="btn alt" data-a=close>Cancel</button><button class=btn data-a=rsend>Submit request</button></div></div>`;
     document.body.append(m);m.querySelectorAll('[name=rr]').forEach(r=>r.onchange=()=>{const u=r.value=='Update details';$('#rl').style.display=$('#rf').style.display=u?'none':'';$('#rl').textContent=(r.value=='Lost ID'?'Affidavit of loss':'Appointment letter')+' (image or PDF)'})},
-  async rsend(){const f=$('#rf').files[0],r=document.querySelector('[name=rr]:checked').value;if(r=='Update details'){try{await setDoc(doc(db,'employees',S.u.uid),{status:'draft',reissue:true,reissueReason:r,reissueDocId:null,reissueAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});S.emp={...S.emp,status:'draft',reissue:true,reissueReason:r,reissueDocId:null};document.querySelector('.md')?.remove();toast('You can now edit your details');me()}catch(x){toast(x.message)}return}
+  async rsend(){const f=$('#rf').files[0],r=document.querySelector('[name=rr]:checked').value;if(r=='Update details'){try{const rid=await newReissue(r,null);await setDoc(doc(db,'employees',S.u.uid),{status:'draft',reissue:true,reissueReason:r,reissueDocId:null,reissueId:rid,reissueAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});S.emp={...S.emp,status:'draft',reissue:true,reissueReason:r,reissueDocId:null,reissueId:rid};document.querySelector('.md')?.remove();toast('You can now edit your details');me()}catch(x){toast(x.message)}return}
     if(!f)return toast('Upload the required document');
     try{toast('Uploading…');let du;if(f.type=='application/pdf'){if(f.size>5e6)return toast('PDF must be under 5 MB');du=await new Promise((ok,no)=>{const x=new FileReader();x.onload=()=>ok(x.result);x.onerror=no;x.readAsDataURL(f)})}else du=await b64(f,1600,'image/jpeg');
-      const id=await up('reissue',du,r),o={reissue:true,reissueReason:r,reissueDocId:id,reissueAt:serverTimestamp(),updatedAt:serverTimestamp()};
-      await setDoc(doc(db,'employees',S.u.uid),o,{merge:true});S.emp={...S.emp,reissue:true,reissueReason:r,reissueDocId:id};document.querySelector('.md')?.remove();toast('Reissue request sent');me()}catch(x){toast(x.message)}},
+      const id=await up('reissue',du,r),rid=await newReissue(r,id),o={reissue:true,reissueReason:r,reissueDocId:id,reissueId:rid,reissueAt:serverTimestamp(),updatedAt:serverTimestamp()};
+      await setDoc(doc(db,'employees',S.u.uid),o,{merge:true});S.emp={...S.emp,reissue:true,reissueReason:r,reissueDocId:id,reissueId:rid};document.querySelector('.md')?.remove();toast('Reissue request sent');me()}catch(x){toast(x.message)}},
   async tdel(a){await setDoc(doc(db,'settings','idTemplate'),{[a.dataset.k]:null},{merge:true});S.tpl[a.dataset.k]=null;tpl()}};
 app.onclick=e=>{const a=e.target.closest('[data-a]');if(a)A[a.dataset.a](a)};
 document.addEventListener('click',e=>{if(e.target.classList?.contains('md'))return e.target.remove();const a=e.target.closest('.md [data-a]');if(a&&!app.contains(a))A[a.dataset.a](a)});
 onAuthStateChanged(auth,async u=>{
-  if(!u){S.u=null;unsub?.();unsubMe?.();return landing()}
+  if(!u){S.u=null;unsub?.();unsub2?.();unsubMe?.();return landing()}
   if(!domainOk(u.email)){await signOut(auth);toast(`Only @${CFG.domain} accounts can sign in`);return landing()}
   if(!u.emailVerified)return unverified();
   S.u=u;
