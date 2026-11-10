@@ -56,14 +56,14 @@ const CFG={
 };
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import{getAuth,onAuthStateChanged,signInWithPopup,GoogleAuthProvider,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import{getFirestore,doc,getDoc,setDoc,collection,getDocs,addDoc,onSnapshot,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import{getFirestore,doc,getDoc,setDoc,collection,getDocs,addDoc,query,where,onSnapshot,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const fb=initializeApp(CFG.firebase),auth=getAuth(fb),db=getFirestore(fb);
 document.querySelectorAll('footer').forEach((f,i)=>i&&f.remove()); // keep a single footer
 const $=s=>document.querySelector(s),app=$('#app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const img=(id,w=800)=>id?`https://drive.google.com/thumbnail?id=${id}&sz=w${w}`:'';
 const toast=(m,ms=3800)=>{const t=$('#t');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',ms)};
-const S={reis:[],u:null,admin:false,view:'me',tab:'pending',rows:[],emp:null,tpl:{},photo:null,sig:null};
+const S={reis:[],myre:[],u:null,admin:false,view:'me',tab:'pending',rows:[],emp:null,tpl:{},photo:null,sig:null};
 const CAMPUS=['Pili','Calabanga','Sipocot','Pasacao'],EMP=['Permanent','Casual','Temporary','Job Order/Contract of Service','Project Based'],BT=['A+','A-','B+','B-','AB+','AB-','O+','O-'];
 const SEC=[
 ['Personal Details','Your official name, appointment details, and how to reach you.',[['email','Institutional email','email','','x'],['empNo','Employee number'],['ext','Name extension','sel',['None','Jr.','Sr.','II','III','IV'],'o'],['first','First name'],['last','Last name'],['middle','Middle name','','','o'],['mi','Middle initial','','','o'],['campus','Campus','sel',CAMPUS],['employment','Employment type','sel',EMP],['ptype','Position type','sel',['Teaching','Non-Teaching']],['position','Position'],['birth','Date of birth','date'],['blood','Blood type','sel',BT],['contact','Contact number','tel'],['address','Address','ta']]],
@@ -89,10 +89,10 @@ async function b64(f,max,type){const b=await createImageBitmap(f),k=Math.min(1,m
 
 // ---- Layout ----
 function shell(inner){
-  const n=S.rows.filter(r=>r.status=='pending').length,m=reqCount(),pc=S.rows.filter(r=>r.status=='verified').length,v=S.view,a=x=>v==x?'on':'';
+  const n=S.rows.filter(r=>r.status=='pending').length,m=reqCount(),pc=S.rows.filter(r=>r.status=='verified').length,pn=S.myre.filter(x=>x.status=='printed').length,v=S.view,a=x=>v==x?'on':'';
   const who=S.admin?esc(S.u.displayName||S.u.email)+' · admin':esc(idLabel(S.emp||{}))+' · user';
   app.innerHTML=`<header><div class="w tb">${SEAL(66)}<div><div class=ttl>Employee ID Registration</div><div class=tsub>Office of the Human Resource Management and Development</div></div><div class=tr><span id=nm>${who}</span><button class="btn lo sm" data-a=out>Log out</button></div></div>
-  ${S.admin?`<nav class=sn><div class=w><a data-a=nav data-v=ver class="${a('ver')}">Verification <span class=cnt id=c1 ${n?'':'hidden'}>${n}</span></a><a data-a=nav data-v=re class="${a('re')}">Reissue requests <span class=cnt id=c2 ${m?'':'hidden'}>${m}</span></a><a data-a=nav data-v=tpl class="${a('tpl')}">ID template</a><a data-a=nav data-v=prt class="${a('prt')}">ID printing <span class=cnt id=c3 ${pc?'':'hidden'}>${pc}</span></a></div></nav>`:''}</header><main class=dk><div class=w>${inner}</div></main>`}
+  ${S.admin?`<nav class=sn><div class=w><a data-a=nav data-v=ver class="${a('ver')}">Verification <span class=cnt id=c1 ${n?'':'hidden'}>${n}</span></a><a data-a=nav data-v=re class="${a('re')}">Reissue requests <span class=cnt id=c2 ${m?'':'hidden'}>${m}</span></a><a data-a=nav data-v=tpl class="${a('tpl')}">ID template</a><a data-a=nav data-v=prt class="${a('prt')}">ID printing <span class=cnt id=c3 ${pc?'':'hidden'}>${pc}</span></a></div></nav>`:`<nav class=sn><div class=w><a data-a=emp data-v=me class="${a('me')}">My ID record</a><a data-a=emp data-v=rp class="${a('rp')}">Reprinted ID <span class=cnt id=c4 ${pn?'':'hidden'}>${pn}</span></a></div></nav>`}</header><main class=dk><div class=w>${inner}</div></main>`}
 function landing(){
   app.innerHTML=`<main class=hero><div class=c>${SEAL()}<h3>CENTRAL BICOL STATE UNIVERSITY OF AGRICULTURE</h3><h1>Digital Employee ID Registration</h1>
   <p>Sign in with your school institutional email to submit your employee ID information across the Pili, Calabanga, Sipocot, and Pasacao campuses.</p>
@@ -110,6 +110,7 @@ const prev=()=>{const x=$('#idp');if(!x||!S.u)return;try{x.innerHTML=idCards({..
 const vals=()=>Object.fromEntries(F.map(([k])=>[k,app.querySelector(`[name=${k}]`).value.trim()]));
 async function patch(o){S.emp={...(S.emp||{}),...o};await setDoc(doc(db,'employees',S.u.uid),{...o,status:'draft',ownerEmail:S.u.email,updatedAt:serverTimestamp()},{merge:true})}
 function me(){
+  if(S.view=='rp')return rp();
   const e=S.emp||{},st=e.status||'draft',lock=st!='draft',d=lock?'disabled':'';S.photo=S.sig=null;
   if(st!='draft'){const T=F.filter(f=>!f[4]).length+2,dn=F.filter(f=>!f[4]&&e[f[0]]).length+!!e.photoId+!!e.signId,
     pr=[...SEC.map(([t,,f])=>[t,f.filter(x=>!x[4]).every(x=>e[x[0]])]),['Photo & signature',!!e.photoId&&!!e.signId]];
@@ -196,7 +197,7 @@ function idCards(e,pr){
 
 // ---- Admin ----
 const sdate=r=>r.submittedAt?.toDate?r.submittedAt.toDate().toISOString().slice(0,10):'—';
-let unsub,unsub2,unsubMe;
+let unsub,unsub2,unsubMe,unsubRe;
 const reqCount=()=>S.reis.filter(x=>x.status=='requested').length+S.rows.filter(r=>r.reissue&&!r.reissueId).length;
 const bd=()=>{const n=S.rows.filter(r=>r.status=='pending').length,m=reqCount();if($('#c1')){$('#c1').textContent=n;$('#c1').hidden=!n;$('#c2').textContent=m;$('#c2').hidden=!m;const p=S.rows.filter(r=>r.status=='verified').length;$('#c3').textContent=p;$('#c3').hidden=!p}};
 async function loadAdmin(){
@@ -205,7 +206,7 @@ async function loadAdmin(){
     const rows=sn.docs.map(d=>({uid:d.id,...d.data()}));
     if(!first){const nw=rows.filter(r=>r.status=='pending'&&(S.rows.find(x=>x.uid==r.uid)||{}).status!='pending');if(nw.length)toast('New submission: '+nw.map(r=>((r.first||'')+' '+(r.last||'')).trim()).join(', '))}
     S.rows=rows;if(first){first=0;unsub2?.();unsub2=onSnapshot(collection(db,'reissues'),q=>{S.reis=q.docs.map(d=>({id:d.id,...d.data()}));if(S.view=='re')reis();else if(S.view=='prt'){S.sel=[...document.querySelectorAll('.pk:checked')].map(x=>x.value);prt()}else bd()},()=>{});res()}else if(S.view=='re')reis();else if(S.view=='ver')ver();else if(S.view=='prt'){S.sel=[...document.querySelectorAll('.pk:checked')].map(x=>x.value);prt()}else bd()},x=>{toast(x.message);res()})})}
-function watchMe(){unsubMe?.();unsubMe=onSnapshot(doc(db,'employees',S.u.uid),sn=>{const n=sn.exists()?sn.data():null,o=S.emp||{};
+function watchMe(){unsubRe?.();unsubRe=onSnapshot(query(collection(db,'reissues'),where('uid','==',S.u.uid)),q=>{S.myre=q.docs.map(d=>({id:d.id,...d.data()}));if(S.view=='rp')rp();else{const c=$('#c4'),n=S.myre.filter(x=>x.status=='printed').length;if(c){c.textContent=n;c.hidden=!n}}},()=>{});unsubMe?.();unsubMe=onSnapshot(doc(db,'employees',S.u.uid),sn=>{const n=sn.exists()?sn.data():null,o=S.emp||{};
   if(n&&((n.status||'draft')!=(o.status||'draft')||!!n.reissue!=!!o.reissue||(n.remarks||'')!=(o.remarks||'')||(n.printedAt?.seconds||0)!=(o.printedAt?.seconds||0))){S.emp=n;me();noticePrinted()}})}
 function noticePrinted(){ // shows the 'ID is printed' popup once per print, on sign-in or live
   const e=S.emp;if(!e||e.status!='issued'||S.admin)return;const k='idseen:'+S.u.uid,v=String(e.printedAt?.seconds||0);
@@ -238,6 +239,11 @@ function tpl(){
   app.querySelectorAll('input[type=file]').forEach(i=>i.onchange=async()=>{toast('Uploading…');try{const old=S.tpl[i.dataset.k],id=await up('template',await b64(i.files[0],1200,'image/jpeg'));S.tpl[i.dataset.k]=id;await setDoc(doc(db,'settings','idTemplate'),{[i.dataset.k]:id,updatedAt:serverTimestamp()},{merge:true});drop(old);toast('Template updated');tpl()}catch(x){toast(x.message)}})}
 
 const td=t=>t?.toDate?t.toDate().toISOString().slice(0,10):'—';
+function rp(){
+  const l=[...S.myre].sort((a,b)=>(b.requestedAt?.seconds||0)-(a.requestedAt?.seconds||0)),pc=l.filter(x=>x.status=='printed').length,lab={requested:['Requested','#3b82f6'],approved:['Approved · waiting to print','#d97706'],printed:['Reprinted','#0d9488']};
+  shell(`<h1>Reprinted ID details</h1><p class=sub>Your ID reissue history: the reason, status and print date of each one.</p>
+  <div class=card style="margin-bottom:16px"><div class=hd style="margin:0"><b>Times your ID was reprinted</b><b style="font-size:26px">${pc}</b></div></div>
+  ${l.length?`<div class="card tw"><table><tr><th>REQUESTED<th>REASON<th>STATUS<th>PRINTED<th style="text-align:right">DOCUMENT</tr>${l.map(x=>{const b=lab[x.status]||lab.requested;return`<tr><td>${td(x.requestedAt)}<td>${esc(x.reason)}<td><span class=bd style="--c:${b[1]}">${b[0]}</span><td>${td(x.printedAt)}<td style="text-align:right">${x.docId?`<button class=lk data-a=viewdoc data-d="${esc(x.docId)}" data-t="${esc(x.reason)}">View</button>`:'—'}</tr>`}).join('')}</table></div>`:`<div class=card style="text-align:center;color:var(--mut);padding:36px 20px">No reissue requests or reprints yet.</div>`}`)}
 function reis(){
   const leg=S.rows.filter(r=>r.reissue&&!r.reissueId).map(r=>({uid:r.uid,empNo:r.empNo,name:fullName(r),campus:r.campus,reason:r.reissueReason,docId:r.reissueDocId,status:'requested',requestedAt:r.reissueAt})),
   all=[...S.reis,...leg].sort((a,b)=>(b.requestedAt?.seconds||0)-(a.requestedAt?.seconds||0)),T={requested:'Requested',approved:'Approved (to print)',printed:'Reprinted'};
@@ -270,7 +276,7 @@ const domainOk=e=>(e||'').toLowerCase().endsWith('@'+CFG.domain);
 const A={
   async google(){try{const p=new GoogleAuthProvider();p.setCustomParameters({hd:CFG.domain,prompt:'select_account'});await signInWithPopup(auth,p)}catch(x){toast(x.message)}},
   out:()=>signOut(auth),reload:async()=>{await auth.currentUser.reload();location.reload()},
-  nav(a){S.view=a.dataset.v;S.pg=0;({tpl,prt,re:reis}[S.view]||ver)()},pall(a){document.querySelectorAll('.pk').forEach(x=>x.checked=a.checked)},print(){doPrint([...document.querySelectorAll('.pk:checked')].map(x=>x.value))},print1:a=>doPrint([a.dataset.u]),ptab(a){S.ptab=a.dataset.t;prt()},rtab(a){S.rtab=a.dataset.t;reis()},hist(a){const l=S.reis.filter(x=>x.uid==a.dataset.u&&x.status=='printed').sort((p,q)=>(q.printedAt?.seconds||0)-(p.printedAt?.seconds||0)),m=document.createElement('div');m.className='md';m.innerHTML=`<div class=card style="max-width:560px"><div class=hd style="margin:0 0 10px"><b>Reprint history · ${esc(l[0]?.name||'')}</b><button class="btn alt sm" data-a=close>Close</button></div>${l.map((x,i)=>`<div class=rv style="padding:10px 0"><span>#${l.length-i} · ${td(x.printedAt)}</span><b>Reprinted due to ${esc(x.reason)}${x.docId?` · <button class=lk data-a=viewdoc data-d="${esc(x.docId)}" data-t="${esc(x.reason)}">Document</button>`:''}</b></div>`).join('')}</div>`;document.body.append(m)},tab(a){S.tab=a.dataset.t;S.pg=0;ver()},pg(a){S.pg=(S.pg||0)+ +a.dataset.d;ver()},review:a=>review(a.dataset.u),close:()=>[...document.querySelectorAll('.md')].pop()?.remove(),viewdoc:a=>viewDoc(a.dataset.d,a.dataset.t),
+  nav(a){S.view=a.dataset.v;S.pg=0;({tpl,prt,re:reis}[S.view]||ver)()},pall(a){document.querySelectorAll('.pk').forEach(x=>x.checked=a.checked)},print(){doPrint([...document.querySelectorAll('.pk:checked')].map(x=>x.value))},print1:a=>doPrint([a.dataset.u]),ptab(a){S.ptab=a.dataset.t;prt()},rtab(a){S.rtab=a.dataset.t;reis()},emp(a){S.view=a.dataset.v;S.view=='rp'?rp():me()},hist(a){const l=S.reis.filter(x=>x.uid==a.dataset.u&&x.status=='printed').sort((p,q)=>(q.printedAt?.seconds||0)-(p.printedAt?.seconds||0)),m=document.createElement('div');m.className='md';m.innerHTML=`<div class=card style="max-width:560px"><div class=hd style="margin:0 0 10px"><b>Reprint history · ${esc(l[0]?.name||'')}</b><button class="btn alt sm" data-a=close>Close</button></div>${l.map((x,i)=>`<div class=rv style="padding:10px 0"><span>#${l.length-i} · ${td(x.printedAt)}</span><b>Reprinted due to ${esc(x.reason)}${x.docId?` · <button class=lk data-a=viewdoc data-d="${esc(x.docId)}" data-t="${esc(x.reason)}">Document</button>`:''}</b></div>`).join('')}</div>`;document.body.append(m)},tab(a){S.tab=a.dataset.t;S.pg=0;ver()},pg(a){S.pg=(S.pg||0)+ +a.dataset.d;ver()},review:a=>review(a.dataset.u),close:()=>[...document.querySelectorAll('.md')].pop()?.remove(),viewdoc:a=>viewDoc(a.dataset.d,a.dataset.t),
   set:a=>setStatus(a.dataset.u,a.dataset.s),clr:()=>S.clear(),sigrep(){$('#sw').hidden=false;$('#rb').hidden=true;$('#sh').hidden=!!S.sig},sigcancel(){$('#sw').hidden=true;$('#rb').hidden=false;S.clear()},submit,confirm:confirmSubmit,async sigsave(){if(!S.sig)return toast('Draw or upload your signature first');try{toast('Saving signature…');const du=padData(),old=S.emp?.signId,id=await up('signature',du);await patch({signId:id});drop(old);S.ls=du;S.sig=null;prev();$('#sp').style.backgroundImage=`url(${du})`;$('#sp').style.display='block';S.clear();$('#sw').hidden=true;$('#rb').hidden=false;$('#sc').hidden=false;toast('Signature saved')}catch(x){toast(x.message)}},
   async editrec(){await setDoc(doc(db,'employees',S.u.uid),{status:'draft',updatedAt:serverTimestamp()},{merge:true});S.emp.status='draft';me()},
   reissue(){const m=document.createElement('div');m.className='md';const o=(v,t)=>`<label style="display:flex;gap:8px;align-items:center;font-size:15px;color:var(--ink)"><input type=radio name=rr value="${v}" style="width:auto" ${v=='Lost ID'?'checked':''}> ${v} <small style="color:var(--mut)">(${t})</small></label>`;
@@ -285,12 +291,12 @@ const A={
 app.onclick=e=>{const a=e.target.closest('[data-a]');if(a)A[a.dataset.a](a)};
 document.addEventListener('click',e=>{if(e.target.classList?.contains('md'))return e.target.remove();const a=e.target.closest('.md [data-a]');if(a&&!app.contains(a))A[a.dataset.a](a)});
 onAuthStateChanged(auth,async u=>{
-  if(!u){S.u=null;unsub?.();unsub2?.();unsubMe?.();return landing()}
+  if(!u){S.u=null;unsub?.();unsub2?.();unsubMe?.();unsubRe?.();S.myre=[];return landing()}
   if(!domainOk(u.email)){await signOut(auth);toast(`Only @${CFG.domain} accounts can sign in`);return landing()}
   if(!u.emailVerified)return unverified();
   S.u=u;
   try{S.admin=(await getDoc(doc(db,'admins',u.email.toLowerCase()))).exists();
     if(S.admin){S.view='ver';await loadAdmin();ver()}
-    else{const[t,s]=await Promise.all([getDoc(doc(db,'settings','idTemplate')),getDoc(doc(db,'employees',u.uid))]);S.tpl=t.exists()?t.data():{};S.emp=s.exists()?s.data():null;me();watchMe();noticePrinted()}
+    else{const[t,s]=await Promise.all([getDoc(doc(db,'settings','idTemplate')),getDoc(doc(db,'employees',u.uid))]);S.tpl=t.exists()?t.data():{};S.emp=s.exists()?s.data():null;S.view='me';me();watchMe();noticePrinted()}
   }catch(x){toast('Could not load data: '+x.message)}});
 </script></body></html>
