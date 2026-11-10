@@ -113,7 +113,6 @@ function me(){
   if(st!='draft'){const T=F.filter(f=>!f[4]).length+2,dn=F.filter(f=>!f[4]&&e[f[0]]).length+!!e.photoId+!!e.signId,
     pr=[...SEC.map(([t,,f])=>[t,f.filter(x=>!x[4]).every(x=>e[x[0]])]),['Photo & signature',!!e.photoId&&!!e.signId]];
     shell(`<div class=hd style="align-items:flex-start"><div><h1>Your employee ID record</h1><p class=sub style="margin:2px 0 0">${esc(fullName(e))}</p></div>${badge(st)}</div>
-    ${st=='pending'||st=='verified'?'<div class=note style="margin-bottom:16px">Check your account here for your ID status. When it says <b>Printed</b>, claim your ID at the HR office.</div>':''}
     <div class=card style="margin-bottom:16px"><h3 style="margin:0">Registration progress</h3><p class=sub>${dn} of ${T} details completed. Fill in every section, then submit your record for verification.</p>
     ${pr.map(([t,ok])=>`<div class=rv style="padding:10px 0"><span style="color:var(--ink)"><i class=dt style="background:${ok?'#10b981':'#d97706'}"></i>${t}</span><b class="${ok?'ok':'miss'}">${ok?'Complete':'Incomplete'}</b></div>`).join('')}
     <p class=sub style="margin:14px 0 8px">${st=='pending'?'Spotted something to fix? You can reopen your record for editing until it\'s verified.':st=='issued'?(e.reissue?`Reissue requested (${esc(e.reissueReason)}). HR will review it.`:'Your ID has been printed. Please claim it from your campus HR office. Lost your ID, new designation, or details changed? Request a reissue.'):'Your record has been verified by HR.'}</p>
@@ -151,6 +150,7 @@ function inkTrim(c){ // removes the white background, darkens thin strokes and c
 const padData=()=>inkTrim($('#pad'));
 const trimImg=src=>new Promise(res=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;c.getContext('2d').drawImage(im,0,0);res(inkTrim(c))};im.onerror=()=>res(src);im.src=src});
 async function drop(id){if(!id)return;for(let i=0;i<2;i++){try{const token=await auth.currentUser.getIdToken(),r=await fetch(CFG.driveScript,{method:'POST',body:JSON.stringify({token,action:'delete',id})}),j=await r.json();if(j.ok)return;if(i)toast('Old file was not deleted: '+(j.error||'unknown error'))}catch(x){if(i)toast('Old file was not deleted')}}}
+function popup(t,m){const x=document.createElement('div');x.className='md';x.innerHTML=`<div class=card style="max-width:440px;text-align:center"><div style="font-size:34px;color:#10b981">✓</div><b style="font-size:18px">${esc(t)}</b><p class=sub style="margin:10px 0 18px">${esc(m)}</p><button class=btn data-a=close>OK</button></div>`;document.body.append(x)}
 async function dget(id){const token=await auth.currentUser.getIdToken(),r=await fetch(CFG.driveScript,{method:'POST',body:JSON.stringify({token,action:'get',id})}),j=await r.json();if(j.error)throw Error(j.error);return j.data}
 const sigP={};S.sc={};
 const sigLoad=id=>!id?Promise.resolve():(sigP[id]||=(async()=>{try{S.sc[id]=await trimImg(await dget(id))}catch(x){S.sc[id]=null}prev()})());
@@ -167,7 +167,7 @@ async function confirmSubmit(){
   document.querySelector('.md')?.remove();toast('Submitting…');
   try{const o=vals(),old=S.sig?S.emp?.signId:null;if(S.sig)o.signId=await up('signature',padData());
     Object.assign(o,{status:'pending',ownerEmail:S.u.email,updatedAt:serverTimestamp(),submittedAt:serverTimestamp(),remarks:''});
-    await setDoc(doc(db,'employees',S.u.uid),o,{merge:true});S.emp={...S.emp,...o};drop(old);toast('Submitted. Please check your account here to see if your ID is printed, then claim it at the HR office.',9000);me()}catch(x){toast('Could not submit: '+x.message)}}
+    await setDoc(doc(db,'employees',S.u.uid),o,{merge:true});S.emp={...S.emp,...o};drop(old);me();popup('Submitted for verification','Please check your account here to see if your ID is printed. When it says Printed, claim your ID at the HR office.')}catch(x){toast('Could not submit: '+x.message)}}
 
 // ---- ID preview ----
 const P=(t,l,top,x='')=>`<span style="left:${l}%;top:${top}%;${x}">${esc(t)}</span>`;
@@ -196,7 +196,7 @@ async function loadAdmin(){
     if(!first){const nw=rows.filter(r=>r.status=='pending'&&(S.rows.find(x=>x.uid==r.uid)||{}).status!='pending');if(nw.length)toast('New submission: '+nw.map(r=>((r.first||'')+' '+(r.last||'')).trim()).join(', '))}
     S.rows=rows;if(first){first=0;res()}else if(S.view=='ver'||S.view=='re')ver();else if(S.view=='prt'){S.sel=[...document.querySelectorAll('.pk:checked')].map(x=>x.value);prt()}else bd()},x=>{toast(x.message);res()})})}
 function watchMe(){unsubMe?.();unsubMe=onSnapshot(doc(db,'employees',S.u.uid),sn=>{const n=sn.exists()?sn.data():null,o=S.emp||{};
-  if(n&&((n.status||'draft')!=(o.status||'draft')||!!n.reissue!=!!o.reissue||(n.remarks||'')!=(o.remarks||''))){if(n.status=='issued'&&o.status!='issued')toast('Your ID status is now Printed. Please claim it at your campus HR office.');S.emp=n;me()}})}
+  if(n&&((n.status||'draft')!=(o.status||'draft')||!!n.reissue!=!!o.reissue||(n.remarks||'')!=(o.remarks||''))){const pr=n.status=='issued'&&o.status!='issued';S.emp=n;me();if(pr)popup('Your ID is printed','Please claim it at your campus HR office.')}})}
 const PG=10;
 function ver(){
   const re=S.view=='re',all=re?S.rows.filter(r=>r.reissue):S.rows.filter(r=>r.status==S.tab),pages=Math.max(1,Math.ceil(all.length/PG));S.pg=Math.min(S.pg||0,pages-1);
