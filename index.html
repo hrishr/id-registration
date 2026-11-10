@@ -73,7 +73,7 @@ const SEC=[
 const F=SEC.flatMap(x=>x[2]);
 const MASK={tin:'###-###-###',sss:'##-#######-#',phic:'##-#########-#',pagibig:'####-####-####',gsis:'###########',contact:'####-###-####',eContact:'####-###-####'};
 const fmt=(v,p)=>{const d=String(v).replace(/\D/g,'');let o='',i=0;for(const c of p){if(i>=d.length)break;if(c=='#')o+=d[i++];else o+=c}return o};
-const NAMEF=['first','last','middle','mi','eName','eRel'];
+const NAMEF=['first','last','middle','mi','eName','eRel','position'];
 const bad=(k,v)=>MASK[k]&&v&&v.length!=MASK[k].length;
 const ST={draft:['Draft','#f59e0b'],pending:['Pending verification','#3b82f6'],verified:['Verified','#16a34a'],issued:['Printed','#0d9488'],inactive:['Inactive','#d97706'],revoked:['Revoked','#dc2626']};
 const fullName=e=>[e.first,e.mi,e.last,e.ext&&e.ext!='None'?e.ext:''].filter(Boolean).join(' ');
